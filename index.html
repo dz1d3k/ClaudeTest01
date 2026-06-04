@@ -393,7 +393,7 @@ h1 {
       <button class="action-btn defend" onclick="playerAction('defend')">
         <span class="btn-icon">🛡️</span>
         <span class="btn-name">Defend</span>
-        <span class="btn-cost">Halve incoming dmg</span>
+        <span class="btn-cost">Trap attackers hard</span>
       </button>
     </div>
   </div>
@@ -419,13 +419,9 @@ h1 {
 
 <script>
 // ── Constants ────────────────────────────────────────────────────
-const TRAIN_FOOD    = 15;
-const TRAIN_WOOD    = 10;
-const ATK_PER_W     = 10;   // damage per attacking warrior
-const DEF_PER_W     = 3;    // damage reduction per defending warrior
-const MIN_DAMAGE    = 3;    // floor damage so attacks always sting
-const DEFEND_MULTI  = 0.5;  // damage multiplier when tribe is defending
-const MAX_TURNS     = 20;
+const TRAIN_FOOD  = 15;
+const TRAIN_WOOD  = 10;
+const MAX_TURNS   = 20;
 
 // ── State ────────────────────────────────────────────────────────
 let G = {};
@@ -455,12 +451,22 @@ function logTurn(n) {
   renderLog();
 }
 
-// ── Damage calc ──────────────────────────────────────────────────
-function calcDamage(attacker, defender) {
-  let dmg = attacker.warriors * ATK_PER_W - defender.warriors * DEF_PER_W;
-  dmg = Math.max(MIN_DAMAGE, dmg);
-  if (defender.defending) dmg = Math.floor(dmg * DEFEND_MULTI);
-  return dmg;
+// ── Combat calc ──────────────────────────────────────────────────
+// Returns how much each side takes when `atk` attacks `def`.
+// If defender is defending: TRAP — attacker takes more than they deal.
+// Normal: attacker has clear advantage but still takes counter-damage.
+function calcCombat(atkW, defW, defIsDefending) {
+  if (defIsDefending) {
+    // Trap: defender was ready, punishes the attacker heavily
+    const attackerTakes = Math.max(5,  defW * 10 - atkW * 2);
+    const defenderTakes = Math.max(1,  atkW *  5 - defW * 1);
+    return { attackerTakes, defenderTakes };
+  } else {
+    // Normal fight: attacker deals ~2x what they receive
+    const defenderTakes = Math.max(3, atkW * 10 - defW * 3);
+    const attackerTakes = Math.max(1, defW *  5 - atkW * 2);
+    return { attackerTakes, defenderTakes };
+  }
 }
 
 // ── Player turn ──────────────────────────────────────────────────
@@ -493,14 +499,19 @@ function playerAction(action) {
         addLog('You have no warriors to attack with!', 'info');
         return;
       }
-      const dmg = calcDamage(p, e);
-      e.hp = Math.max(0, e.hp - dmg);
-      addLog(`Your warriors charge! Dealt ${dmg} damage.${e.defending ? ' (enemy was defending)' : ''}`, 'combat');
+      const { attackerTakes, defenderTakes } = calcCombat(p.warriors, e.warriors, e.defending);
+      e.hp = Math.max(0, e.hp - defenderTakes);
+      p.hp = Math.max(0, p.hp - attackerTakes);
+      if (e.defending) {
+        addLog(`You charged into their defenses! TRAP — you dealt ${defenderTakes} but took ${attackerTakes} damage!`, 'combat');
+      } else {
+        addLog(`Your warriors charge! Dealt ${defenderTakes} dmg, took ${attackerTakes} dmg in return.`, 'combat');
+      }
       break;
     }
     case 'defend': {
       p.defending = true;
-      addLog('Your tribe raises defenses — incoming damage halved this turn.', 'player-act');
+      addLog('Your tribe sets a defensive trap — attackers will suffer for it.', 'player-act');
       break;
     }
   }
@@ -522,18 +533,20 @@ function enemyTurn() {
   const p = G.player;
   e.defending = false;
 
-  const canTrain     = e.food >= TRAIN_FOOD && e.wood >= TRAIN_WOOD;
-  const needsRes     = e.food < TRAIN_FOOD || e.wood < TRAIN_WOOD;
-  const hasWarriors  = e.warriors > 0;
-  const r            = Math.random();
+  const canTrain    = e.food >= TRAIN_FOOD && e.wood >= TRAIN_WOOD;
+  const needsRes    = e.food < TRAIN_FOOD || e.wood < TRAIN_WOOD;
+  const hasWarriors = e.warriors > 0;
+  const playerStrong = p.warriors >= 4; // player likely to attack — good time to set trap
+  const r = Math.random();
 
   let action;
-  if (!hasWarriors || (needsRes && e.warriors < 3))    action = 'gather';
-  else if (canTrain && e.warriors < 5 && r < 0.45)     action = 'train';
-  else if (hasWarriors && r < 0.65)                    action = 'attack';
-  else if (needsRes)                                   action = 'gather';
-  else if (r < 0.5)                                    action = 'gather';
-  else                                                 action = 'defend';
+  if (!hasWarriors || (needsRes && e.warriors < 3))          action = 'gather';
+  else if (canTrain && e.warriors < 5 && r < 0.38)           action = 'train';
+  else if (playerStrong && e.warriors >= 3 && r < 0.35)      action = 'defend'; // lure trap
+  else if (hasWarriors && r < 0.62)                          action = 'attack';
+  else if (needsRes)                                         action = 'gather';
+  else if (r < 0.5)                                          action = 'gather';
+  else                                                       action = 'defend';
 
   switch (action) {
     case 'gather': {
@@ -548,14 +561,19 @@ function enemyTurn() {
       break;
     }
     case 'attack': {
-      const dmg = calcDamage(e, p);
-      p.hp = Math.max(0, p.hp - dmg);
-      addLog(`Enemy warriors attack! Dealt ${dmg} damage to your tribe.${p.defending ? ' (you were defending)' : ''}`, 'combat');
+      const { attackerTakes, defenderTakes } = calcCombat(e.warriors, p.warriors, p.defending);
+      p.hp = Math.max(0, p.hp - defenderTakes);
+      e.hp = Math.max(0, e.hp - attackerTakes);
+      if (p.defending) {
+        addLog(`Enemy charged into your trap! They dealt ${defenderTakes} but took ${attackerTakes} damage!`, 'combat');
+      } else {
+        addLog(`Enemy warriors attack! Dealt ${defenderTakes} dmg to you, took ${attackerTakes} dmg back.`, 'combat');
+      }
       break;
     }
     case 'defend': {
       e.defending = true;
-      addLog('Enemy tribe raises defenses.', 'enemy-act');
+      addLog('Enemy tribe sets a defensive trap!', 'enemy-act');
       break;
     }
   }
@@ -635,8 +653,10 @@ function renderUI() {
 
   // Dynamic hints
   document.getElementById('gather-hint').textContent = `+${p.workers * 2} Food, +${p.workers} Wood`;
-  const expectedDmg = calcDamage(p, e);
-  document.getElementById('attack-hint').textContent = `~${expectedDmg} dmg`;
+  const { attackerTakes: selfDmg, defenderTakes: dealDmg } = calcCombat(p.warriors, e.warriors, e.defending);
+  document.getElementById('attack-hint').textContent = e.defending
+    ? `TRAP! deal ${dealDmg}, take ${selfDmg}`
+    : `deal ${dealDmg}, take ${selfDmg}`;
 
   // Button disabled states (during player's turn)
   document.getElementById('btn-train').disabled  = p.food < TRAIN_FOOD || p.wood < TRAIN_WOOD;

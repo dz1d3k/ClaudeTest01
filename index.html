@@ -45,6 +45,7 @@ h1 { font-size: 2em; color: #f0c040; text-shadow: 2px 2px 8px #000; letter-spaci
 .badge.training  { background: #101820; color: #c8d850; border-color: #505810; }
 .badge.fortified { background: #101830; color: #6080e0; border-color: #2040a0; }
 .badge.attacking { background: #200808; color: #e06060; border-color: #601010; }
+.badge.wounded   { background: #201008; color: #e08040; border-color: #804020; }
 
 .vs-col { display: flex; align-items: center; justify-content: center; padding: 20px 4px; font-size: 1.7em; font-weight: bold; color: #f0c040; text-shadow: 0 0 12px #f0c04070; }
 
@@ -233,7 +234,7 @@ let ui  = { draftN: 1, atkN: 1 };
 // ── State ────────────────────────────────────────────────────────
 function newTribe(name) {
   return { name, hp: 100, maxHp: 100, food: 20, workers: 5, warriors: 3,
-           drafting: 0, attackingWith: 0, fortifying: false };
+           drafting: 0, wounded: 0, attackingWith: 0, fortifying: false };
 }
 
 function initGame() {
@@ -263,6 +264,12 @@ function applyPassive() {
       side.warriors += side.drafting;
       addLog(`${side === p ? 'Your' : 'Enemy'} ${side.drafting} recruits finish training → ${side.warriors} warriors!`, label);
       side.drafting = 0;
+    }
+    // Heal 1 wounded warrior per turn
+    if (side.wounded > 0) {
+      side.wounded--;
+      side.warriors++;
+      addLog(`${side === p ? 'One of your' : 'An enemy'} wounded warrior recovers. (${side.warriors} active)`, label);
     }
     side.attackingWith = 0;
     side.fortifying    = false;
@@ -319,6 +326,25 @@ function resolveCombat() {
 
   e.hp = Math.max(0, e.hp - dmgToE);
   p.hp = Math.max(0, p.hp - dmgToP);
+
+  // Wounding: attackers > defenders → no wounds; defenders > attackers → excess wounds them
+  // wounded = min(attackers, max(0, defenders - attackers))
+  if (pAtk > 0) {
+    const pWounded = Math.min(pAtk, Math.max(0, eDef - pAtk));
+    if (pWounded > 0) {
+      p.warriors -= pWounded;
+      p.wounded  += pWounded;
+      addLog(`${pWounded} of your warriors were wounded — out of action until healed!`, 'combat');
+    }
+  }
+  if (eAtk > 0) {
+    const eWounded = Math.min(eAtk, Math.max(0, pDef - eAtk));
+    if (eWounded > 0) {
+      e.warriors -= eWounded;
+      e.wounded  += eWounded;
+      addLog(`${eWounded} enemy warriors were wounded!`, 'combat');
+    }
+  }
 }
 
 // ── Player actions ───────────────────────────────────────────────
@@ -388,6 +414,10 @@ function enemyTurn() {
     action = 'attack';
     aN = Math.max(1, Math.floor(e.warriors * (0.45 + r * 0.35)));
     aN = Math.min(aN, e.warriors);
+    // Avoid sending fewer attackers than player's defenders — would cause wounds
+    const pDefW = p.warriors;
+    if (aN < pDefW && e.warriors >= pDefW) aN = pDefW; // match defense if possible
+    else if (aN < pDefW && r < 0.5)        action = 'fortify'; // or hold back
   } else {
     action = canRecruit ? 'recruit' : 'fortify';
   }
@@ -532,12 +562,19 @@ function refreshAtkUI() {
   const info = document.getElementById('atk-info');
   info.className = 'sub-info' + (trapped ? ' trap' : '');
 
+  const eDefW   = e.warriors; // assume all defend (worst case)
+  const wounded = Math.min(n, Math.max(0, eDefW - n));
+
   let txt = `${n} attack, ${def} defend. `;
   if (trapped) {
-    txt += `⚠️ ENEMY IS FORTIFIED — deal ~${deal}, take ~${counter} trap damage!`;
+    txt += `⚠️ ENEMY FORTIFIED — deal ~${deal}, take ~${counter} trap dmg!`;
   } else {
-    txt += `vs ~${e.warriors} defenders: deal ~${deal} dmg${counter > 0 ? `, take ~${counter} counter` : ''}.`;
+    txt += `vs ~${eDefW} defenders → deal ~${deal} dmg`;
+    if (counter > 0) txt += `, take ~${counter} counter`;
+    txt += '.';
   }
+  if (wounded > 0) txt += ` ⚠️ ~${wounded} warrior${wounded > 1 ? 's' : ''} will be wounded!`;
+  info.className = 'sub-info' + (trapped || wounded > 0 ? ' trap' : '');
   info.textContent = txt;
 }
 
@@ -570,7 +607,8 @@ function renderTribe(side, t) {
   fill.style.width = pct + '%';
   fill.className = 'hp-fill' + (pct <= 25 ? ' crit' : pct <= 50 ? ' low' : '');
 
-  document.getElementById(`${side}-warriors`).textContent = t.warriors + (t.drafting > 0 ? ` (+${t.drafting})` : '');
+  const wLabel = t.warriors + (t.drafting > 0 ? ` (+${t.drafting})` : '') + (t.wounded > 0 ? ` 🩹${t.wounded}` : '');
+  document.getElementById(`${side}-warriors`).textContent = wLabel;
   document.getElementById(`${side}-workers`).textContent  = t.workers;
   document.getElementById(`${side}-food`).textContent     = t.food;
   document.getElementById(`${side}-income`).textContent   = `+${t.workers * FOOD_PER_WORKER}`;
@@ -588,6 +626,10 @@ function renderTribe(side, t) {
   if (t.attackingWith > 0) {
     const b = document.createElement('span'); b.className = 'badge attacking';
     b.textContent = `⚔️ ${t.attackingWith} attacking`; badges.appendChild(b);
+  }
+  if (t.wounded > 0) {
+    const b = document.createElement('span'); b.className = 'badge wounded';
+    b.textContent = `🩹 ${t.wounded} wounded`; badges.appendChild(b);
   }
 }
 

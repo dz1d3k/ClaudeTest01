@@ -6,313 +6,101 @@
 <title>Tribal Island Wars</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Georgia', serif; background: #0a3d52; color: #f0e6d3; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+header { text-align: center; padding: 18px 20px 10px; width: 100%; background: linear-gradient(180deg, #061015 0%, transparent 100%); }
+h1 { font-size: 2em; color: #f0c040; text-shadow: 2px 2px 8px #000; letter-spacing: 4px; }
+.subtitle { color: #80a8b8; font-style: italic; font-size: 0.9em; margin-top: 4px; }
+.game-container { width: 100%; max-width: 880px; padding: 10px 16px 24px; }
 
-body {
-  font-family: 'Georgia', serif;
-  background: #0a3d52;
-  color: #f0e6d3;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+.turn-bar { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 10px 0 14px; }
+.turn-label { font-size: 1.05em; color: #f0c040; font-weight: bold; }
+.phase-pill { background: #0f3040; border: 1px solid #2a6a7a; border-radius: 20px; padding: 3px 14px; font-size: 0.85em; color: #80d0e0; }
 
-header {
-  text-align: center;
-  padding: 18px 20px 10px;
-  width: 100%;
-  background: linear-gradient(180deg, #061015 0%, transparent 100%);
-}
-
-h1 {
-  font-size: 2em;
-  color: #f0c040;
-  text-shadow: 2px 2px 8px #000;
-  letter-spacing: 4px;
-}
-
-.subtitle {
-  color: #80a8b8;
-  font-style: italic;
-  font-size: 0.9em;
-  margin-top: 4px;
-}
-
-.game-container {
-  width: 100%;
-  max-width: 880px;
-  padding: 10px 16px 24px;
-}
-
-/* ── Turn bar ── */
-.turn-bar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin: 10px 0 14px;
-}
-
-.turn-label {
-  font-size: 1.05em;
-  color: #f0c040;
-  font-weight: bold;
-}
-
-.phase-pill {
-  background: #0f3040;
-  border: 1px solid #2a6a7a;
-  border-radius: 20px;
-  padding: 3px 14px;
-  font-size: 0.85em;
-  color: #80d0e0;
-}
-
-/* ── Tribes panel ── */
-.tribes-panel {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
-  margin-bottom: 14px;
-  align-items: start;
-}
-
-.tribe-card {
-  background: rgba(0,0,0,0.38);
-  border-radius: 12px;
-  padding: 14px;
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-}
+.tribes-panel { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; margin-bottom: 14px; align-items: start; }
+.tribe-card { background: rgba(0,0,0,0.38); border-radius: 12px; padding: 14px; border: 2px solid transparent; }
 .tribe-card.player { border-color: #286a40; }
 .tribe-card.enemy  { border-color: #7a2020; }
-
-.tribe-name {
-  font-size: 1em;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 10px;
-}
+.tribe-name { font-size: 1em; font-weight: bold; text-align: center; margin-bottom: 10px; }
 .tribe-card.player .tribe-name { color: #55d870; }
 .tribe-card.enemy  .tribe-name { color: #e06060; }
 
-/* HP bar */
-.hp-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.78em;
-  color: #999;
-  margin-bottom: 3px;
-}
-.hp-bar {
-  height: 13px;
-  background: #111;
-  border-radius: 7px;
-  overflow: hidden;
-  border: 1px solid #333;
-  margin-bottom: 12px;
-}
-.hp-fill {
-  height: 100%;
-  border-radius: 7px;
-  transition: width 0.4s ease;
-}
-.player .hp-fill        { background: linear-gradient(90deg, #246a36, #55d870); }
-.player .hp-fill.low    { background: linear-gradient(90deg, #7a6000, #d0b000); }
-.player .hp-fill.crit   { background: linear-gradient(90deg, #7a2000, #d04000); }
-.enemy  .hp-fill        { background: linear-gradient(90deg, #7a2020, #e06060); }
-.enemy  .hp-fill.low    { background: linear-gradient(90deg, #7a6000, #d0b000); }
-.enemy  .hp-fill.crit   { background: linear-gradient(90deg, #7a2000, #d04000); }
+.hp-row { display: flex; justify-content: space-between; font-size: 0.78em; color: #999; margin-bottom: 3px; }
+.hp-bar { height: 13px; background: #111; border-radius: 7px; overflow: hidden; border: 1px solid #333; margin-bottom: 12px; }
+.hp-fill { height: 100%; border-radius: 7px; transition: width 0.4s ease; }
+.player .hp-fill      { background: linear-gradient(90deg, #246a36, #55d870); }
+.player .hp-fill.low  { background: linear-gradient(90deg, #7a6000, #d0b000); }
+.player .hp-fill.crit { background: linear-gradient(90deg, #7a2000, #d04000); }
+.enemy  .hp-fill      { background: linear-gradient(90deg, #7a2020, #e06060); }
+.enemy  .hp-fill.low  { background: linear-gradient(90deg, #7a6000, #d0b000); }
+.enemy  .hp-fill.crit { background: linear-gradient(90deg, #7a2000, #d04000); }
 
-/* Stats grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-.stat {
-  background: rgba(255,255,255,0.05);
-  border-radius: 6px;
-  padding: 6px 8px;
-}
-.stat-label {
-  font-size: 0.72em;
-  color: #7a9aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.stat-value {
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #f0e0b0;
-}
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.stat { background: rgba(255,255,255,0.05); border-radius: 6px; padding: 6px 8px; }
+.stat-label { font-size: 0.72em; color: #7a9aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 1.1em; font-weight: bold; color: #f0e0b0; }
 
-.badges {
-  margin-top: 8px;
-  min-height: 22px;
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.badge {
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 0.74em;
-  border: 1px solid;
-}
-.badge.defending {
-  background: #101830;
-  color: #6080e0;
-  border-color: #2040a0;
-}
+.badges { margin-top: 8px; min-height: 22px; display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { border-radius: 4px; padding: 2px 8px; font-size: 0.74em; border: 1px solid; }
+.badge.training  { background: #101820; color: #c8d850; border-color: #505810; }
+.badge.fortified { background: #101830; color: #6080e0; border-color: #2040a0; }
+.badge.attacking { background: #200808; color: #e06060; border-color: #601010; }
 
-/* VS */
-.vs-col {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 4px;
-  font-size: 1.7em;
-  font-weight: bold;
-  color: #f0c040;
-  text-shadow: 0 0 12px #f0c04070;
-}
+.vs-col { display: flex; align-items: center; justify-content: center; padding: 20px 4px; font-size: 1.7em; font-weight: bold; color: #f0c040; text-shadow: 0 0 12px #f0c04070; }
 
-/* ── Action panel ── */
-.action-panel {
-  background: rgba(0,0,0,0.32);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 12px;
-  border: 1px solid #1a3a4a;
-}
-.action-title {
-  text-align: center;
-  font-size: 0.8em;
-  color: #6090a0;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 12px;
-}
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-.action-btn {
-  background: rgba(255,255,255,0.06);
-  border: 2px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  padding: 10px 6px 8px;
-  cursor: pointer;
-  color: #f0e6d3;
-  font-family: inherit;
-  text-align: center;
-  transition: background 0.15s, transform 0.15s, border-color 0.15s;
-  line-height: 1.3;
-}
-.action-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: rgba(255,255,255,0.13);
-}
-.action-btn:active:not(:disabled) { transform: translateY(0); }
+.action-panel { background: rgba(0,0,0,0.32); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #1a3a4a; }
+.action-title { text-align: center; font-size: 0.8em; color: #6090a0; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+.action-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.action-btn { background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 6px 8px; cursor: pointer; color: #f0e6d3; font-family: inherit; text-align: center; transition: background 0.15s, transform 0.15s; line-height: 1.3; }
+.action-btn:hover:not(:disabled) { transform: translateY(-2px); background: rgba(255,255,255,0.13); }
 .action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
-
 .btn-icon { font-size: 1.55em; display: block; margin-bottom: 3px; }
 .btn-name { font-size: 0.82em; font-weight: bold; display: block; }
 .btn-cost { font-size: 0.7em; color: #8aa8b8; display: block; margin-top: 2px; }
+.action-btn.recruit { border-color: #3a7a28; }
+.action-btn.recruit:hover:not(:disabled) { background: rgba(58,122,40,0.22); }
+.action-btn.draft   { border-color: #8a6820; }
+.action-btn.draft:hover:not(:disabled)   { background: rgba(138,104,32,0.22); }
+.action-btn.attack  { border-color: #8a2828; }
+.action-btn.attack:hover:not(:disabled)  { background: rgba(138,40,40,0.22); }
+.action-btn.fortify { border-color: #284a8a; }
+.action-btn.fortify:hover:not(:disabled) { background: rgba(40,74,138,0.22); }
 
-.action-btn.gather { border-color: #3a7a28; }
-.action-btn.gather:hover:not(:disabled) { background: rgba(58,122,40,0.22); }
-.action-btn.train  { border-color: #8a6820; }
-.action-btn.train:hover:not(:disabled)  { background: rgba(138,104,32,0.22); }
-.action-btn.attack { border-color: #8a2828; }
-.action-btn.attack:hover:not(:disabled) { background: rgba(138,40,40,0.22); }
-.action-btn.defend { border-color: #284a8a; }
-.action-btn.defend:hover:not(:disabled) { background: rgba(40,74,138,0.22); }
+/* Sub-panels */
+.sub-panel { background: rgba(0,0,0,0.5); border: 1px solid #2a4a5a; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+.sub-title { font-size: 0.82em; color: #90b8c8; text-align: center; margin-bottom: 10px; }
+.stepper-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px; }
+.step-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; width: 34px; height: 34px; font-size: 1.3em; cursor: pointer; color: #f0e6d3; font-family: inherit; line-height: 1; }
+.step-btn:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+.step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.count-num { font-size: 1.8em; font-weight: bold; color: #f0c040; min-width: 44px; text-align: center; }
+.sub-info { font-size: 0.8em; color: #90a8b8; text-align: center; margin-bottom: 10px; line-height: 1.5; }
+.sub-info.trap { color: #e0a040; font-weight: bold; }
+.confirm-btn { display: block; width: 100%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.28); border-radius: 8px; padding: 9px; font-size: 0.9em; font-weight: bold; color: #f0e6d3; cursor: pointer; font-family: inherit; }
+.confirm-btn:hover { background: rgba(255,255,255,0.2); }
+.cancel-link { display: block; text-align: center; font-size: 0.78em; color: #5080a0; cursor: pointer; margin-top: 8px; }
+.cancel-link:hover { color: #80b0c8; }
 
-.enemy-thinking {
-  text-align: center;
-  color: #e06060;
-  font-style: italic;
-  font-size: 0.88em;
-  padding: 6px;
-  display: none;
-}
+.enemy-thinking { text-align: center; color: #e06060; font-style: italic; font-size: 0.88em; padding: 6px; display: none; }
 
-/* ── Log panel ── */
-.log-panel {
-  background: rgba(0,0,0,0.32);
-  border-radius: 12px;
-  padding: 14px;
-  border: 1px solid #1a2e3e;
-  max-height: 180px;
-  overflow-y: auto;
-}
-.log-title {
-  font-size: 0.78em;
-  color: #6090a0;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 8px;
-}
-.log-entry {
-  font-size: 0.83em;
-  padding: 3px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  line-height: 1.45;
-}
-.log-entry.turn-header  { color: #f0c040; font-weight: bold; padding-top: 6px; }
-.log-entry.player-act   { color: #70d880; }
-.log-entry.enemy-act    { color: #e07070; }
-.log-entry.combat       { color: #d8b840; }
-.log-entry.info         { color: #80a8b8; }
+.log-panel { background: rgba(0,0,0,0.32); border-radius: 12px; padding: 14px; border: 1px solid #1a2e3e; max-height: 200px; overflow-y: auto; }
+.log-title { font-size: 0.78em; color: #6090a0; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.log-entry { font-size: 0.83em; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); line-height: 1.45; }
+.log-entry.turn-header { color: #f0c040; font-weight: bold; padding-top: 6px; }
+.log-entry.player-act  { color: #70d880; }
+.log-entry.enemy-act   { color: #e07070; }
+.log-entry.combat      { color: #d8b840; }
+.log-entry.income      { color: #6090a0; font-style: italic; }
+.log-entry.info        { color: #80a8b8; }
 
-/* ── Game Over overlay ── */
-.gameover-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.82);
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
-}
+.gameover-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 100; align-items: center; justify-content: center; }
 .gameover-overlay.show { display: flex; }
-.gameover-card {
-  background: #0a1824;
-  border: 3px solid #f0c040;
-  border-radius: 16px;
-  padding: 36px 52px;
-  text-align: center;
-  max-width: 420px;
-  width: 90%;
-}
-.gameover-title {
-  font-size: 2.4em;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
+.gameover-card { background: #0a1824; border: 3px solid #f0c040; border-radius: 16px; padding: 36px 52px; text-align: center; max-width: 420px; width: 90%; }
+.gameover-title { font-size: 2.4em; font-weight: bold; margin-bottom: 10px; }
 .gameover-title.win  { color: #55d870; }
 .gameover-title.lose { color: #e06060; }
 .gameover-title.draw { color: #f0c040; }
-.gameover-desc {
-  color: #90aab8;
-  margin-bottom: 24px;
-  line-height: 1.5;
-}
-.restart-btn {
-  background: #f0c040;
-  color: #0a1824;
-  border: none;
-  border-radius: 8px;
-  padding: 11px 28px;
-  font-size: 0.95em;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
-}
+.gameover-desc { color: #90aab8; margin-bottom: 24px; line-height: 1.5; }
+.restart-btn { background: #f0c040; color: #0a1824; border: none; border-radius: 8px; padding: 11px 28px; font-size: 0.95em; font-weight: bold; cursor: pointer; font-family: inherit; }
 .restart-btn:hover { background: #ffd060; }
 </style>
 </head>
@@ -330,41 +118,32 @@ h1 {
     <span class="phase-pill" id="phase-pill">Your turn</span>
   </div>
 
-  <!-- Tribes -->
   <div class="tribes-panel">
 
-    <div class="tribe-card player" id="player-card">
+    <div class="tribe-card player">
       <div class="tribe-name">Your Tribe</div>
-      <div class="hp-row">
-        <span>HP</span><span id="player-hp-text">100 / 100</span>
-      </div>
-      <div class="hp-bar">
-        <div class="hp-fill" id="player-hp-fill" style="width:100%"></div>
-      </div>
+      <div class="hp-row"><span>HP</span><span id="player-hp-text">100 / 100</span></div>
+      <div class="hp-bar"><div class="hp-fill" id="player-hp-fill" style="width:100%"></div></div>
       <div class="stats-grid">
         <div class="stat"><div class="stat-label">Warriors</div><div class="stat-value" id="player-warriors">3</div></div>
         <div class="stat"><div class="stat-label">Workers</div><div class="stat-value" id="player-workers">5</div></div>
         <div class="stat"><div class="stat-label">Food</div><div class="stat-value" id="player-food">20</div></div>
-        <div class="stat"><div class="stat-label">Wood</div><div class="stat-value" id="player-wood">10</div></div>
+        <div class="stat"><div class="stat-label">Income</div><div class="stat-value" id="player-income">+10</div></div>
       </div>
       <div class="badges" id="player-badges"></div>
     </div>
 
     <div class="vs-col">VS</div>
 
-    <div class="tribe-card enemy" id="enemy-card">
+    <div class="tribe-card enemy">
       <div class="tribe-name">Enemy Tribe</div>
-      <div class="hp-row">
-        <span>HP</span><span id="enemy-hp-text">100 / 100</span>
-      </div>
-      <div class="hp-bar">
-        <div class="hp-fill" id="enemy-hp-fill" style="width:100%"></div>
-      </div>
+      <div class="hp-row"><span>HP</span><span id="enemy-hp-text">100 / 100</span></div>
+      <div class="hp-bar"><div class="hp-fill" id="enemy-hp-fill" style="width:100%"></div></div>
       <div class="stats-grid">
         <div class="stat"><div class="stat-label">Warriors</div><div class="stat-value" id="enemy-warriors">3</div></div>
         <div class="stat"><div class="stat-label">Workers</div><div class="stat-value" id="enemy-workers">5</div></div>
         <div class="stat"><div class="stat-label">Food</div><div class="stat-value" id="enemy-food">20</div></div>
-        <div class="stat"><div class="stat-label">Wood</div><div class="stat-value" id="enemy-wood">10</div></div>
+        <div class="stat"><div class="stat-label">Income</div><div class="stat-value" id="enemy-income">+10</div></div>
       </div>
       <div class="badges" id="enemy-badges"></div>
     </div>
@@ -372,35 +151,60 @@ h1 {
   </div>
 
   <!-- Actions -->
-  <div class="action-panel" id="action-panel">
+  <div class="action-panel">
     <div class="action-title">Choose Your Action</div>
     <div class="action-buttons">
-      <button class="action-btn gather" onclick="playerAction('gather')">
+      <button class="action-btn recruit" onclick="playerAction('recruit')" id="btn-recruit">
         <span class="btn-icon">🌾</span>
-        <span class="btn-name">Gather</span>
-        <span class="btn-cost" id="gather-hint">+10 Food, +5 Wood</span>
+        <span class="btn-name">Recruit</span>
+        <span class="btn-cost">10 food → +1 worker</span>
       </button>
-      <button class="action-btn train" onclick="playerAction('train')" id="btn-train">
+      <button class="action-btn draft" onclick="openPanel('draft')" id="btn-draft">
+        <span class="btn-icon">⚒️</span>
+        <span class="btn-name">Draft</span>
+        <span class="btn-cost">Workers → Warriors (1 turn)</span>
+      </button>
+      <button class="action-btn attack" onclick="openPanel('attack')" id="btn-attack">
         <span class="btn-icon">⚔️</span>
-        <span class="btn-name">Train Warrior</span>
-        <span class="btn-cost">15 Food + 10 Wood</span>
+        <span class="btn-name">Attack</span>
+        <span class="btn-cost">Choose how many to send</span>
       </button>
-      <button class="action-btn attack" onclick="playerAction('attack')" id="btn-attack">
-        <span class="btn-icon">🗡️</span>
-        <span class="btn-name">Attack!</span>
-        <span class="btn-cost" id="attack-hint">~21 dmg</span>
-      </button>
-      <button class="action-btn defend" onclick="playerAction('defend')">
+      <button class="action-btn fortify" onclick="playerAction('fortify')" id="btn-fortify">
         <span class="btn-icon">🛡️</span>
-        <span class="btn-name">Defend</span>
-        <span class="btn-cost">Trap attackers hard</span>
+        <span class="btn-name">Fortify</span>
+        <span class="btn-cost">All defend — trap attackers</span>
       </button>
+    </div>
+
+    <!-- Draft sub-panel -->
+    <div class="sub-panel" id="panel-draft" style="display:none">
+      <div class="sub-title">Draft workers as warriors (ready next turn)</div>
+      <div class="stepper-row">
+        <button class="step-btn" id="draft-minus" onclick="stepDraft(-1)">−</button>
+        <span class="count-num" id="draft-num">1</span>
+        <button class="step-btn" id="draft-plus"  onclick="stepDraft(+1)">+</button>
+      </div>
+      <div class="sub-info" id="draft-info"></div>
+      <button class="confirm-btn" onclick="confirmDraft()">⚒️ Draft Warriors</button>
+      <span class="cancel-link" onclick="closePanel()">Cancel</span>
+    </div>
+
+    <!-- Attack sub-panel -->
+    <div class="sub-panel" id="panel-attack" style="display:none">
+      <div class="sub-title">How many warriors do you send to attack?</div>
+      <div class="stepper-row">
+        <button class="step-btn" id="atk-minus" onclick="stepAtk(-1)">−</button>
+        <span class="count-num" id="atk-num">1</span>
+        <button class="step-btn" id="atk-plus"  onclick="stepAtk(+1)">+</button>
+      </div>
+      <div class="sub-info" id="atk-info"></div>
+      <button class="confirm-btn" onclick="confirmAttack()">⚔️ Send Warriors</button>
+      <span class="cancel-link" onclick="closePanel()">Cancel</span>
     </div>
   </div>
 
   <div class="enemy-thinking" id="enemy-thinking">Enemy tribe is deciding...</div>
 
-  <!-- Log -->
   <div class="log-panel" id="log-panel">
     <div class="log-title">Battle Log</div>
     <div id="log-entries"></div>
@@ -408,36 +212,31 @@ h1 {
 
 </div>
 
-<!-- Game Over -->
 <div class="gameover-overlay" id="gameover-overlay">
   <div class="gameover-card">
-    <div class="gameover-title" id="gameover-title">Victory!</div>
-    <div class="gameover-desc" id="gameover-desc"></div>
+    <div class="gameover-title" id="gameover-title"></div>
+    <div class="gameover-desc"  id="gameover-desc"></div>
     <button class="restart-btn" onclick="restartGame()">Play Again</button>
   </div>
 </div>
 
 <script>
-// ── Constants ────────────────────────────────────────────────────
-const TRAIN_FOOD  = 15;
-const TRAIN_WOOD  = 10;
-const MAX_TURNS   = 20;
+const RECRUIT_COST     = 10;
+const FOOD_PER_WORKER  = 2;
+const MAX_TURNS        = 20;
+
+let G   = {};
+let ui  = { draftN: 1, atkN: 1 };
 
 // ── State ────────────────────────────────────────────────────────
-let G = {};
-
 function newTribe(name) {
-  return { name, hp: 100, maxHp: 100, warriors: 3, workers: 5, food: 20, wood: 10, defending: false };
+  return { name, hp: 100, maxHp: 100, food: 20, workers: 5, warriors: 3,
+           drafting: 0, attackingWith: 0, fortifying: false };
 }
 
 function initGame() {
-  G = {
-    turn: 1,
-    phase: 'player',   // 'player' | 'enemy' | 'over'
-    player: newTribe('Your Tribe'),
-    enemy:  newTribe('Enemy Tribe'),
-    log: []
-  };
+  G = { turn: 1, phase: 'player',
+        player: newTribe('Your Tribe'), enemy: newTribe('Enemy Tribe'), log: [] };
 }
 
 // ── Logging ──────────────────────────────────────────────────────
@@ -445,151 +244,193 @@ function addLog(text, cls = 'info') {
   G.log.push({ text, cls });
   renderLog();
 }
+function logTurn(n) { G.log.push({ text: `── Turn ${n} ──`, cls: 'turn-header' }); renderLog(); }
 
-function logTurn(n) {
-  G.log.push({ text: `── Turn ${n} ──`, cls: 'turn-header' });
-  renderLog();
-}
+// ── Passive income (called at start of each new turn) ────────────
+function applyPassive() {
+  const p = G.player, e = G.enemy;
 
-// ── Combat calc ──────────────────────────────────────────────────
-// Returns how much each side takes when `atk` attacks `def`.
-// If defender is defending: TRAP — attacker takes more than they deal.
-// Normal: attacker has clear advantage but still takes counter-damage.
-function calcCombat(atkW, defW, defIsDefending) {
-  if (defIsDefending) {
-    // Trap: defender was ready, punishes the attacker heavily
-    const attackerTakes = Math.max(5,  defW * 10 - atkW * 2);
-    const defenderTakes = Math.max(1,  atkW *  5 - defW * 1);
-    return { attackerTakes, defenderTakes };
-  } else {
-    // Normal fight: attacker deals ~2x what they receive
-    const defenderTakes = Math.max(3, atkW * 10 - defW * 3);
-    const attackerTakes = Math.max(1, defW *  5 - atkW * 2);
-    return { attackerTakes, defenderTakes };
+  const pF = p.workers * FOOD_PER_WORKER;
+  const eF = e.workers * FOOD_PER_WORKER;
+  p.food += pF;
+  e.food += eF;
+  addLog(`Income — You: +${pF} food. Enemy: +${eF} food.`, 'income');
+
+  for (const [side, label] of [[p,'player-act'],[e,'enemy-act']]) {
+    if (side.drafting > 0) {
+      side.warriors += side.drafting;
+      addLog(`${side === p ? 'Your' : 'Enemy'} ${side.drafting} recruits finish training → ${side.warriors} warriors!`, label);
+      side.drafting = 0;
+    }
+    side.attackingWith = 0;
+    side.fortifying    = false;
   }
 }
 
-// ── Player turn ──────────────────────────────────────────────────
-function playerAction(action) {
+// ── Combat math ───────────────────────────────────────────────────
+// Returns how much damage atkW attackers deal to defW defenders,
+// and counter-damage attacker takes (trap if defender is fortified).
+function combatResult(atkW, defW, defFortified) {
+  if (atkW === 0) return { deal: 0, counter: 0 };
+  if (defFortified) {
+    const deal    = Math.max(1, atkW * 5 - defW * 5);
+    const counter = Math.max(5, defW * 8 - atkW * 2);
+    return { deal, counter };
+  }
+  const deal    = Math.max(2, atkW * 8 - defW * 3);
+  const counter = Math.max(0, defW * 3 - atkW * 2);
+  return { deal, counter };
+}
+
+function resolveCombat() {
+  const p = G.player, e = G.enemy;
+  const pAtk = p.attackingWith, eAtk = e.attackingWith;
+  const pDef = p.warriors - pAtk, eDef = e.warriors - eAtk;
+
+  let dmgToE = 0, dmgToP = 0;
+
+  // Player attacks enemy's defense
+  if (pAtk > 0) {
+    const { deal, counter } = combatResult(pAtk, eDef, e.fortifying);
+    dmgToE += deal;
+    dmgToP += counter;
+    if (e.fortifying) {
+      addLog(`You charged ${pAtk} into enemy fortifications! Dealt ${deal} dmg, hit trap for ${counter}!`, 'combat');
+    } else {
+      addLog(`Your ${pAtk} warriors attacked (${eDef} defending). Dealt ${deal}${counter > 0 ? `, took ${counter} counter` : ''}.`, 'player-act');
+    }
+  }
+
+  // Enemy attacks player's defense
+  if (eAtk > 0) {
+    const { deal, counter } = combatResult(eAtk, pDef, p.fortifying);
+    dmgToP += deal;
+    dmgToE += counter;
+    if (p.fortifying) {
+      addLog(`Enemy ${eAtk} charged your fortification! Dealt ${deal} to you, took ${counter} trap!`, 'combat');
+    } else {
+      addLog(`Enemy ${eAtk} warriors attacked (${pDef} defending). Dealt ${deal}${counter > 0 ? `, took ${counter} counter` : ''}.`, 'enemy-act');
+    }
+  }
+
+  if (pAtk === 0 && eAtk === 0) addLog('No attacks this turn — both sides hold.', 'info');
+
+  e.hp = Math.max(0, e.hp - dmgToE);
+  p.hp = Math.max(0, p.hp - dmgToP);
+}
+
+// ── Player actions ───────────────────────────────────────────────
+function playerAction(action, param) {
   if (G.phase !== 'player') return;
+  closePanel();
 
   const p = G.player;
-  const e = G.enemy;
-
   logTurn(G.turn);
 
   switch (action) {
-    case 'gather': {
-      const f = p.workers * 2, w = p.workers * 1;
-      p.food += f; p.wood += w;
-      addLog(`Your tribe gathers: +${f} food, +${w} wood.`, 'player-act');
+    case 'recruit':
+      if (p.food < RECRUIT_COST) { addLog('Not enough food!', 'info'); return; }
+      p.food -= RECRUIT_COST;
+      p.workers++;
+      addLog(`Recruited a worker. (${p.workers} workers, +${p.workers * FOOD_PER_WORKER}/turn)`, 'player-act');
       break;
-    }
-    case 'train': {
-      if (p.food < TRAIN_FOOD || p.wood < TRAIN_WOOD) {
-        addLog('Not enough resources to train a warrior!', 'info');
-        return;
-      }
-      p.food -= TRAIN_FOOD; p.wood -= TRAIN_WOOD; p.warriors++;
-      addLog(`A new warrior joins your tribe! (${p.warriors} warriors total)`, 'player-act');
+    case 'draft': {
+      const n = param;
+      p.workers -= n; p.drafting += n;
+      addLog(`Drafting ${n} workers — they become warriors next turn. (${p.workers} workers remain)`, 'player-act');
       break;
     }
     case 'attack': {
-      if (p.warriors === 0) {
-        addLog('You have no warriors to attack with!', 'info');
-        return;
-      }
-      const { attackerTakes, defenderTakes } = calcCombat(p.warriors, e.warriors, e.defending);
-      e.hp = Math.max(0, e.hp - defenderTakes);
-      p.hp = Math.max(0, p.hp - attackerTakes);
-      if (e.defending) {
-        addLog(`You charged into their defenses! TRAP — you dealt ${defenderTakes} but took ${attackerTakes} damage!`, 'combat');
-      } else {
-        addLog(`Your warriors charge! Dealt ${defenderTakes} dmg, took ${attackerTakes} dmg in return.`, 'combat');
-      }
+      const n = param;
+      p.attackingWith = n;
+      addLog(`Sending ${n} to attack, ${p.warriors - n} hold defense.`, 'player-act');
       break;
     }
-    case 'defend': {
-      p.defending = true;
-      addLog('Your tribe sets a defensive trap — attackers will suffer for it.', 'player-act');
+    case 'fortify':
+      if (p.warriors === 0) { addLog('No warriors to fortify with!', 'info'); return; }
+      p.fortifying = true;
+      addLog(`All ${p.warriors} warriors fortify — enemies will pay dearly if they attack!`, 'player-act');
       break;
-    }
   }
 
   G.phase = 'enemy';
   renderUI();
-  if (checkOver()) return;
-
   setActionsEnabled(false);
   document.getElementById('enemy-thinking').style.display = 'block';
-  setTimeout(enemyTurn, 800);
+  setTimeout(enemyTurn, 900);
 }
 
 // ── Enemy AI ─────────────────────────────────────────────────────
 function enemyTurn() {
   document.getElementById('enemy-thinking').style.display = 'none';
-
-  const e = G.enemy;
-  const p = G.player;
-  e.defending = false;
-
-  const canTrain    = e.food >= TRAIN_FOOD && e.wood >= TRAIN_WOOD;
-  const needsRes    = e.food < TRAIN_FOOD || e.wood < TRAIN_WOOD;
-  const hasWarriors = e.warriors > 0;
-  const playerStrong = p.warriors >= 4; // player likely to attack — good time to set trap
+  const e = G.enemy, p = G.player;
   const r = Math.random();
 
-  let action;
-  if (!hasWarriors || (needsRes && e.warriors < 3))          action = 'gather';
-  else if (canTrain && e.warriors < 5 && r < 0.38)           action = 'train';
-  else if (playerStrong && e.warriors >= 3 && r < 0.35)      action = 'defend'; // lure trap
-  else if (hasWarriors && r < 0.62)                          action = 'attack';
-  else if (needsRes)                                         action = 'gather';
-  else if (r < 0.5)                                          action = 'gather';
-  else                                                       action = 'defend';
+  const canRecruit   = e.food >= RECRUIT_COST;
+  const wantWorkers  = e.workers < 4;
+  const wantWarriors = e.warriors < 5 && e.workers >= 2;
+  const hasWarriors  = e.warriors > 0;
+  const playerBig    = p.warriors >= 5;
 
-  switch (action) {
-    case 'gather': {
-      const f = e.workers * 2, w = e.workers * 1;
-      e.food += f; e.wood += w;
-      addLog(`Enemy tribe gathers: +${f} food, +${w} wood.`, 'enemy-act');
-      break;
-    }
-    case 'train': {
-      e.food -= TRAIN_FOOD; e.wood -= TRAIN_WOOD; e.warriors++;
-      addLog(`Enemy tribe trains a new warrior! (${e.warriors} warriors total)`, 'enemy-act');
-      break;
-    }
-    case 'attack': {
-      const { attackerTakes, defenderTakes } = calcCombat(e.warriors, p.warriors, p.defending);
-      p.hp = Math.max(0, p.hp - defenderTakes);
-      e.hp = Math.max(0, e.hp - attackerTakes);
-      if (p.defending) {
-        addLog(`Enemy charged into your trap! They dealt ${defenderTakes} but took ${attackerTakes} damage!`, 'combat');
-      } else {
-        addLog(`Enemy warriors attack! Dealt ${defenderTakes} dmg to you, took ${attackerTakes} dmg back.`, 'combat');
-      }
-      break;
-    }
-    case 'defend': {
-      e.defending = true;
-      addLog('Enemy tribe sets a defensive trap!', 'enemy-act');
-      break;
-    }
+  let action, dN = 1, aN = 1;
+
+  if (!hasWarriors && e.drafting === 0) {
+    action = (canRecruit && wantWorkers) ? 'recruit' : (e.workers >= 1 ? 'draft' : 'recruit');
+  } else if (wantWorkers && canRecruit && r < 0.28) {
+    action = 'recruit';
+  } else if (wantWarriors && e.workers >= 2 && r < 0.35) {
+    action = 'draft'; dN = Math.max(1, Math.min(2, Math.floor(e.workers / 2)));
+  } else if (playerBig && hasWarriors && e.warriors >= 3 && r < 0.30) {
+    action = 'fortify';
+  } else if (hasWarriors && r < 0.62) {
+    action = 'attack';
+    aN = Math.max(1, Math.floor(e.warriors * (0.45 + r * 0.35)));
+    aN = Math.min(aN, e.warriors);
+  } else {
+    action = canRecruit ? 'recruit' : 'fortify';
   }
 
-  p.defending = false;
+  // Fallback: if recruit and no food, switch to fortify/draft
+  if (action === 'recruit' && !canRecruit) action = hasWarriors ? 'fortify' : 'draft';
+  if (action === 'draft' && e.workers < 1) action = 'fortify';
+
+  switch (action) {
+    case 'recruit':
+      e.food -= RECRUIT_COST; e.workers++;
+      addLog(`Enemy recruits a worker. (${e.workers} workers)`, 'enemy-act');
+      break;
+    case 'draft':
+      dN = Math.max(1, Math.min(dN, e.workers));
+      e.workers -= dN; e.drafting += dN;
+      addLog(`Enemy drafts ${dN} workers as warriors — ready next turn.`, 'enemy-act');
+      break;
+    case 'attack':
+      e.attackingWith = aN;
+      addLog(`Enemy sends ${aN} warriors to attack, ${e.warriors - aN} defend.`, 'enemy-act');
+      break;
+    case 'fortify':
+      if (hasWarriors) {
+        e.fortifying = true;
+        addLog(`Enemy tribe fortifies — a trap is set!`, 'enemy-act');
+      } else {
+        addLog(`Enemy holds back, gathering strength.`, 'enemy-act');
+      }
+      break;
+  }
+
+  resolveCombat();
   G.turn++;
   G.phase = 'player';
 
+  if (checkOver()) return;
+  if (G.turn > MAX_TURNS) { endGame('timeout'); return; }
+
+  applyPassive();
   renderUI();
   setActionsEnabled(true);
-
-  if (checkOver()) return;
-  if (G.turn > MAX_TURNS) { endGame('timeout'); }
 }
 
-// ── Win condition ────────────────────────────────────────────────
+// ── Win check ─────────────────────────────────────────────────────
 function checkOver() {
   if (G.player.hp <= 0) { endGame('lose'); return true; }
   if (G.enemy.hp  <= 0) { endGame('win');  return true; }
@@ -600,121 +441,182 @@ function endGame(result) {
   G.phase = 'over';
   setActionsEnabled(false);
   renderUI();
-
   const title = document.getElementById('gameover-title');
   const desc  = document.getElementById('gameover-desc');
   const p = G.player, e = G.enemy;
-
   if (result === 'win') {
-    title.textContent = 'Victory!';
-    title.className = 'gameover-title win';
-    desc.textContent = 'Your warriors have crushed the enemy tribe. The island is yours!';
+    title.textContent = 'Victory!'; title.className = 'gameover-title win';
+    desc.textContent  = 'Your warriors crushed the enemy tribe. The island is yours!';
   } else if (result === 'lose') {
-    title.textContent = 'Defeated';
-    title.className = 'gameover-title lose';
-    desc.textContent = 'Your tribe has fallen. The enemy claims the island.';
+    title.textContent = 'Defeated'; title.className = 'gameover-title lose';
+    desc.textContent  = 'Your tribe has fallen. The enemy claims the island.';
+  } else if (p.hp > e.hp) {
+    title.textContent = 'Victory!'; title.className = 'gameover-title win';
+    desc.textContent  = `20 turns up — you had more HP (${p.hp} vs ${e.hp}). You hold the island!`;
+  } else if (e.hp > p.hp) {
+    title.textContent = 'Defeated'; title.className = 'gameover-title lose';
+    desc.textContent  = `20 turns up — enemy outlasted you (${e.hp} vs ${p.hp} HP).`;
   } else {
-    if (p.hp > e.hp) {
-      title.textContent = 'Victory!';
-      title.className = 'gameover-title win';
-      desc.textContent = `20 turns are up! Your tribe stands stronger (${p.hp} vs ${e.hp} HP). You hold the island!`;
-    } else if (e.hp > p.hp) {
-      title.textContent = 'Defeated';
-      title.className = 'gameover-title lose';
-      desc.textContent = `20 turns are up. The enemy outlasted you (${e.hp} vs ${p.hp} HP). The island is lost.`;
-    } else {
-      title.textContent = 'Stalemate';
-      title.className = 'gameover-title draw';
-      desc.textContent = `Both tribes are equally matched after 20 turns. A tense peace settles over the island.`;
-    }
+    title.textContent = 'Stalemate'; title.className = 'gameover-title draw';
+    desc.textContent  = 'Both tribes equally matched after 20 turns.';
   }
-
   document.getElementById('gameover-overlay').classList.add('show');
 }
 
 function restartGame() {
   document.getElementById('gameover-overlay').classList.remove('show');
+  document.getElementById('log-entries').innerHTML = '';
   initGame();
+  closePanel();
   renderUI();
   setActionsEnabled(true);
-  document.getElementById('log-entries').innerHTML = '';
-  addLog('A new battle for the island begins. Choose your action wisely.', 'info');
+  addLog('New battle! Workers earn food each turn automatically. Draft them as warriors when ready.', 'info');
 }
 
-// ── Render ───────────────────────────────────────────────────────
+// ── Sub-panel UI ──────────────────────────────────────────────────
+function openPanel(which) {
+  closePanel();
+  const p = G.player;
+  if (which === 'draft') {
+    if (p.workers < 1) { addLog('No workers to draft!', 'info'); return; }
+    ui.draftN = 1;
+    document.getElementById('panel-draft').style.display = 'block';
+    refreshDraftUI();
+  } else {
+    if (p.warriors < 1) { addLog('No warriors to send!', 'info'); return; }
+    ui.atkN = Math.max(1, Math.ceil(p.warriors / 2));
+    document.getElementById('panel-attack').style.display = 'block';
+    refreshAtkUI();
+  }
+}
+
+function closePanel() {
+  document.getElementById('panel-draft').style.display  = 'none';
+  document.getElementById('panel-attack').style.display = 'none';
+}
+
+function stepDraft(d) {
+  const p = G.player;
+  ui.draftN = Math.max(1, Math.min(p.workers, ui.draftN + d));
+  refreshDraftUI();
+}
+
+function stepAtk(d) {
+  const p = G.player;
+  ui.atkN = Math.max(1, Math.min(p.warriors, ui.atkN + d));
+  refreshAtkUI();
+}
+
+function refreshDraftUI() {
+  const p = G.player, n = ui.draftN;
+  document.getElementById('draft-num').textContent   = n;
+  document.getElementById('draft-minus').disabled    = n <= 1;
+  document.getElementById('draft-plus').disabled     = n >= p.workers;
+  const remaining = p.workers - n;
+  document.getElementById('draft-info').textContent  =
+    `${n} worker${n>1?'s':''} train this turn → warriors next turn.\n${remaining} workers remain (+${remaining * FOOD_PER_WORKER} food/turn).`;
+}
+
+function refreshAtkUI() {
+  const p = G.player, e = G.enemy, n = ui.atkN;
+  document.getElementById('atk-num').textContent  = n;
+  document.getElementById('atk-minus').disabled   = n <= 1;
+  document.getElementById('atk-plus').disabled    = n >= p.warriors;
+
+  const def = p.warriors - n;
+  // Estimate: assume enemy defends with all their warriors (worst case for us)
+  const { deal, counter } = combatResult(n, e.warriors, e.fortifying);
+  const trapped = e.fortifying;
+  const info = document.getElementById('atk-info');
+  info.className = 'sub-info' + (trapped ? ' trap' : '');
+
+  let txt = `${n} attack, ${def} defend. `;
+  if (trapped) {
+    txt += `⚠️ ENEMY IS FORTIFIED — deal ~${deal}, take ~${counter} trap damage!`;
+  } else {
+    txt += `vs ~${e.warriors} defenders: deal ~${deal} dmg${counter > 0 ? `, take ~${counter} counter` : ''}.`;
+  }
+  info.textContent = txt;
+}
+
+function confirmDraft()  { playerAction('draft',  ui.draftN); }
+function confirmAttack() { playerAction('attack', ui.atkN);   }
+
+// ── Render ────────────────────────────────────────────────────────
 function renderUI() {
-  const { player: p, enemy: e, turn } = G;
+  document.getElementById('turn-label').textContent =
+    `Turn ${Math.min(G.turn, MAX_TURNS)} / ${MAX_TURNS}`;
+  document.getElementById('phase-pill').textContent =
+    G.phase === 'player' ? 'Your turn' : G.phase === 'enemy' ? "Enemy's turn" : 'Game Over';
 
-  document.getElementById('turn-label').textContent = `Turn ${Math.min(turn, MAX_TURNS)} / ${MAX_TURNS}`;
-  document.getElementById('phase-pill').textContent  = G.phase === 'player' ? 'Your turn' : "Enemy's turn";
+  renderTribe('player', G.player);
+  renderTribe('enemy',  G.enemy);
 
-  renderTribe('player', p);
-  renderTribe('enemy',  e);
-
-  // Dynamic hints
-  document.getElementById('gather-hint').textContent = `+${p.workers * 2} Food, +${p.workers} Wood`;
-  const { attackerTakes: selfDmg, defenderTakes: dealDmg } = calcCombat(p.warriors, e.warriors, e.defending);
-  document.getElementById('attack-hint').textContent = e.defending
-    ? `TRAP! deal ${dealDmg}, take ${selfDmg}`
-    : `deal ${dealDmg}, take ${selfDmg}`;
-
-  // Button disabled states (during player's turn)
-  document.getElementById('btn-train').disabled  = p.food < TRAIN_FOOD || p.wood < TRAIN_WOOD;
-  document.getElementById('btn-attack').disabled = p.warriors === 0;
+  if (G.phase === 'player') {
+    const p = G.player;
+    document.getElementById('btn-recruit').disabled = p.food < RECRUIT_COST;
+    document.getElementById('btn-draft').disabled   = p.workers < 1;
+    document.getElementById('btn-attack').disabled  = p.warriors < 1;
+    document.getElementById('btn-fortify').disabled = p.warriors < 1;
+  }
 }
 
-function renderTribe(side, tribe) {
-  const pct = (tribe.hp / tribe.maxHp) * 100;
-  document.getElementById(`${side}-hp-text`).textContent = `${tribe.hp} / ${tribe.maxHp}`;
-
+function renderTribe(side, t) {
+  const pct = (t.hp / t.maxHp) * 100;
+  document.getElementById(`${side}-hp-text`).textContent = `${t.hp} / ${t.maxHp}`;
   const fill = document.getElementById(`${side}-hp-fill`);
   fill.style.width = pct + '%';
   fill.className = 'hp-fill' + (pct <= 25 ? ' crit' : pct <= 50 ? ' low' : '');
 
-  document.getElementById(`${side}-warriors`).textContent = tribe.warriors;
-  document.getElementById(`${side}-workers`).textContent  = tribe.workers;
-  document.getElementById(`${side}-food`).textContent     = tribe.food;
-  document.getElementById(`${side}-wood`).textContent     = tribe.wood;
+  document.getElementById(`${side}-warriors`).textContent = t.warriors + (t.drafting > 0 ? ` (+${t.drafting})` : '');
+  document.getElementById(`${side}-workers`).textContent  = t.workers;
+  document.getElementById(`${side}-food`).textContent     = t.food;
+  document.getElementById(`${side}-income`).textContent   = `+${t.workers * FOOD_PER_WORKER}`;
 
   const badges = document.getElementById(`${side}-badges`);
   badges.innerHTML = '';
-  if (tribe.defending) {
-    const b = document.createElement('span');
-    b.className = 'badge defending';
-    b.textContent = '🛡️ Defending';
-    badges.appendChild(b);
+  if (t.drafting > 0) {
+    const b = document.createElement('span'); b.className = 'badge training';
+    b.textContent = `⚒️ Training ${t.drafting}`; badges.appendChild(b);
+  }
+  if (t.fortifying) {
+    const b = document.createElement('span'); b.className = 'badge fortified';
+    b.textContent = '🛡️ Fortified'; badges.appendChild(b);
+  }
+  if (t.attackingWith > 0) {
+    const b = document.createElement('span'); b.className = 'badge attacking';
+    b.textContent = `⚔️ ${t.attackingWith} attacking`; badges.appendChild(b);
   }
 }
 
 function renderLog() {
-  const container = document.getElementById('log-entries');
-  container.innerHTML = '';
-  const recent = G.log.slice(-40);
-  for (const entry of recent) {
-    const div = document.createElement('div');
-    div.className = `log-entry ${entry.cls}`;
-    div.textContent = entry.text;
-    container.appendChild(div);
+  const c = document.getElementById('log-entries');
+  c.innerHTML = '';
+  for (const e of G.log.slice(-40)) {
+    const d = document.createElement('div');
+    d.className = `log-entry ${e.cls}`;
+    d.textContent = e.text;
+    c.appendChild(d);
   }
-  const panel = document.getElementById('log-panel');
-  panel.scrollTop = panel.scrollHeight;
+  document.getElementById('log-panel').scrollTop = 99999;
 }
 
-function setActionsEnabled(enabled) {
-  document.querySelectorAll('.action-btn').forEach(btn => {
-    btn.disabled = !enabled;
-  });
-  if (enabled) {
-    // Re-apply contextual disabled states
-    document.getElementById('btn-train').disabled  = G.player.food < TRAIN_FOOD || G.player.wood < TRAIN_WOOD;
-    document.getElementById('btn-attack').disabled = G.player.warriors === 0;
+function setActionsEnabled(on) {
+  document.querySelectorAll('.action-btn').forEach(b => b.disabled = !on);
+  if (on) {
+    const p = G.player;
+    document.getElementById('btn-recruit').disabled = p.food < RECRUIT_COST;
+    document.getElementById('btn-draft').disabled   = p.workers < 1;
+    document.getElementById('btn-attack').disabled  = p.warriors < 1;
+    document.getElementById('btn-fortify').disabled = p.warriors < 1;
   }
 }
 
-// ── Boot ─────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────
 initGame();
 renderUI();
-addLog('The battle for the island begins. Choose your first action.', 'info');
+addLog('Battle begins! Workers earn food each turn automatically.', 'info');
+addLog('Recruit workers → Draft them as warriors → Split your attack/defense each turn.', 'info');
 </script>
 </body>
 </html>

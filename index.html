@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tribal Island Wars</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Georgia', serif;
+  background: #0a3d52;
+  color: #f0e6d3;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+header {
+  text-align: center;
+  padding: 18px 20px 10px;
+  width: 100%;
+  background: linear-gradient(180deg, #061015 0%, transparent 100%);
+}
+
+h1 {
+  font-size: 2em;
+  color: #f0c040;
+  text-shadow: 2px 2px 8px #000;
+  letter-spacing: 4px;
+}
+
+.subtitle {
+  color: #80a8b8;
+  font-style: italic;
+  font-size: 0.9em;
+  margin-top: 4px;
+}
+
+.game-container {
+  width: 100%;
+  max-width: 880px;
+  padding: 10px 16px 24px;
+}
+
+/* ── Turn bar ── */
+.turn-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0 14px;
+}
+
+.turn-label {
+  font-size: 1.05em;
+  color: #f0c040;
+  font-weight: bold;
+}
+
+.phase-pill {
+  background: #0f3040;
+  border: 1px solid #2a6a7a;
+  border-radius: 20px;
+  padding: 3px 14px;
+  font-size: 0.85em;
+  color: #80d0e0;
+}
+
+/* ── Tribes panel ── */
+.tribes-panel {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: start;
+}
+
+.tribe-card {
+  background: rgba(0,0,0,0.38);
+  border-radius: 12px;
+  padding: 14px;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+.tribe-card.player { border-color: #286a40; }
+.tribe-card.enemy  { border-color: #7a2020; }
+
+.tribe-name {
+  font-size: 1em;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.tribe-card.player .tribe-name { color: #55d870; }
+.tribe-card.enemy  .tribe-name { color: #e06060; }
+
+/* HP bar */
+.hp-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78em;
+  color: #999;
+  margin-bottom: 3px;
+}
+.hp-bar {
+  height: 13px;
+  background: #111;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid #333;
+  margin-bottom: 12px;
+}
+.hp-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease;
+}
+.player .hp-fill        { background: linear-gradient(90deg, #246a36, #55d870); }
+.player .hp-fill.low    { background: linear-gradient(90deg, #7a6000, #d0b000); }
+.player .hp-fill.crit   { background: linear-gradient(90deg, #7a2000, #d04000); }
+.enemy  .hp-fill        { background: linear-gradient(90deg, #7a2020, #e06060); }
+.enemy  .hp-fill.low    { background: linear-gradient(90deg, #7a6000, #d0b000); }
+.enemy  .hp-fill.crit   { background: linear-gradient(90deg, #7a2000, #d04000); }
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.stat {
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.stat-label {
+  font-size: 0.72em;
+  color: #7a9aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-value {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #f0e0b0;
+}
+
+.badges {
+  margin-top: 8px;
+  min-height: 22px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.badge {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.74em;
+  border: 1px solid;
+}
+.badge.defending {
+  background: #101830;
+  color: #6080e0;
+  border-color: #2040a0;
+}
+
+/* VS */
+.vs-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 4px;
+  font-size: 1.7em;
+  font-weight: bold;
+  color: #f0c040;
+  text-shadow: 0 0 12px #f0c04070;
+}
+
+/* ── Action panel ── */
+.action-panel {
+  background: rgba(0,0,0,0.32);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #1a3a4a;
+}
+.action-title {
+  text-align: center;
+  font-size: 0.8em;
+  color: #6090a0;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.action-btn {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 6px 8px;
+  cursor: pointer;
+  color: #f0e6d3;
+  font-family: inherit;
+  text-align: center;
+  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  line-height: 1.3;
+}
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.13);
+}
+.action-btn:active:not(:disabled) { transform: translateY(0); }
+.action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+.btn-icon { font-size: 1.55em; display: block; margin-bottom: 3px; }
+.btn-name { font-size: 0.82em; font-weight: bold; display: block; }
+.btn-cost { font-size: 0.7em; color: #8aa8b8; display: block; margin-top: 2px; }
+
+.action-btn.gather { border-color: #3a7a28; }
+.action-btn.gather:hover:not(:disabled) { background: rgba(58,122,40,0.22); }
+.action-btn.train  { border-color: #8a6820; }
+.action-btn.train:hover:not(:disabled)  { background: rgba(138,104,32,0.22); }
+.action-btn.attack { border-color: #8a2828; }
+.action-btn.attack:hover:not(:disabled) { background: rgba(138,40,40,0.22); }
+.action-btn.defend { border-color: #284a8a; }
+.action-btn.defend:hover:not(:disabled) { background: rgba(40,74,138,0.22); }
+
+.enemy-thinking {
+  text-align: center;
+  color: #e06060;
+  font-style: italic;
+  font-size: 0.88em;
+  padding: 6px;
+  display: none;
+}
+
+/* ── Log panel ── */
+.log-panel {
+  background: rgba(0,0,0,0.32);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #1a2e3e;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.log-title {
+  font-size: 0.78em;
+  color: #6090a0;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+.log-entry {
+  font-size: 0.83em;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  line-height: 1.45;
+}
+.log-entry.turn-header  { color: #f0c040; font-weight: bold; padding-top: 6px; }
+.log-entry.player-act   { color: #70d880; }
+.log-entry.enemy-act    { color: #e07070; }
+.log-entry.combat       { color: #d8b840; }
+.log-entry.info         { color: #80a8b8; }
+
+/* ── Game Over overlay ── */
+.gameover-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.gameover-overlay.show { display: flex; }
+.gameover-card {
+  background: #0a1824;
+  border: 3px solid #f0c040;
+  border-radius: 16px;
+  padding: 36px 52px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+}
+.gameover-title {
+  font-size: 2.4em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.gameover-title.win  { color: #55d870; }
+.gameover-title.lose { color: #e06060; }
+.gameover-title.draw { color: #f0c040; }
+.gameover-desc {
+  color: #90aab8;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.restart-btn {
+  background: #f0c040;
+  color: #0a1824;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 28px;
+  font-size: 0.95em;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.restart-btn:hover { background: #ffd060; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TRIBAL ISLAND WARS</h1>
+  <p class="subtitle">Command your tribe — conquer the island</p>
+</header>
+
+<div class="game-container">
+
+  <div class="turn-bar">
+    <span class="turn-label" id="turn-label">Turn 1 / 20</span>
+    <span class="phase-pill" id="phase-pill">Your turn</span>
+  </div>
+
+  <!-- Tribes -->
+  <div class="tribes-panel">
+
+    <div class="tribe-card player" id="player-card">
+      <div class="tribe-name">Your Tribe</div>
+      <div class="hp-row">
+        <span>HP</span><span id="player-hp-text">100 / 100</span>
+      </div>
+      <div class="hp-bar">
+        <div class="hp-fill" id="player-hp-fill" style="width:100%"></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">Warriors</div><div class="stat-value" id="player-warriors">3</div></div>
+        <div class="stat"><div class="stat-label">Workers</div><div class="stat-value" id="player-workers">5</div></div>
+        <div class="stat"><div class="stat-label">Food</div><div class="stat-value" id="player-food">20</div></div>
+        <div class="stat"><div class="stat-label">Wood</div><div class="stat-value" id="player-wood">10</div></div>
+      </div>
+      <div class="badges" id="player-badges"></div>
+    </div>
+
+    <div class="vs-col">VS</div>
+
+    <div class="tribe-card enemy" id="enemy-card">
+      <div class="tribe-name">Enemy Tribe</div>
+      <div class="hp-row">
+        <span>HP</span><span id="enemy-hp-text">100 / 100</span>
+      </div>
+      <div class="hp-bar">
+        <div class="hp-fill" id="enemy-hp-fill" style="width:100%"></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">Warriors</div><div class="stat-value" id="enemy-warriors">3</div></div>
+        <div class="stat"><div class="stat-label">Workers</div><div class="stat-value" id="enemy-workers">5</div></div>
+        <div class="stat"><div class="stat-label">Food</div><div class="stat-value" id="enemy-food">20</div></div>
+        <div class="stat"><div class="stat-label">Wood</div><div class="stat-value" id="enemy-wood">10</div></div>
+      </div>
+      <div class="badges" id="enemy-badges"></div>
+    </div>
+
+  </div>
+
+  <!-- Actions -->
+  <div class="action-panel" id="action-panel">
+    <div class="action-title">Choose Your Action</div>
+    <div class="action-buttons">
+      <button class="action-btn gather" onclick="playerAction('gather')">
+        <span class="btn-icon">🌾</span>
+        <span class="btn-name">Gather</span>
+        <span class="btn-cost" id="gather-hint">+10 Food, +5 Wood</span>
+      </button>
+      <button class="action-btn train" onclick="playerAction('train')" id="btn-train">
+        <span class="btn-icon">⚔️</span>
+        <span class="btn-name">Train Warrior</span>
+        <span class="btn-cost">15 Food + 10 Wood</span>
+      </button>
+      <button class="action-btn attack" onclick="playerAction('attack')" id="btn-attack">
+        <span class="btn-icon">🗡️</span>
+        <span class="btn-name">Attack!</span>
+        <span class="btn-cost" id="attack-hint">~21 dmg</span>
+      </button>
+      <button class="action-btn defend" onclick="playerAction('defend')">
+        <span class="btn-icon">🛡️</span>
+        <span class="btn-name">Defend</span>
+        <span class="btn-cost">Halve incoming dmg</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="enemy-thinking" id="enemy-thinking">Enemy tribe is deciding...</div>
+
+  <!-- Log -->
+  <div class="log-panel" id="log-panel">
+    <div class="log-title">Battle Log</div>
+    <div id="log-entries"></div>
+  </div>
+
+</div>
+
+<!-- Game Over -->
+<div class="gameover-overlay" id="gameover-overlay">
+  <div class="gameover-card">
+    <div class="gameover-title" id="gameover-title">Victory!</div>
+    <div class="gameover-desc" id="gameover-desc"></div>
+    <button class="restart-btn" onclick="restartGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────
+const TRAIN_FOOD    = 15;
+const TRAIN_WOOD    = 10;
+const ATK_PER_W     = 10;   // damage per attacking warrior
+const DEF_PER_W     = 3;    // damage reduction per defending warrior
+const MIN_DAMAGE    = 3;    // floor damage so attacks always sting
+const DEFEND_MULTI  = 0.5;  // damage multiplier when tribe is defending
+const MAX_TURNS     = 20;
+
+// ── State ────────────────────────────────────────────────────────
+let G = {};
+
+function newTribe(name) {
+  return { name, hp: 100, maxHp: 100, warriors: 3, workers: 5, food: 20, wood: 10, defending: false };
+}
+
+function initGame() {
+  G = {
+    turn: 1,
+    phase: 'player',   // 'player' | 'enemy' | 'over'
+    player: newTribe('Your Tribe'),
+    enemy:  newTribe('Enemy Tribe'),
+    log: []
+  };
+}
+
+// ── Logging ──────────────────────────────────────────────────────
+function addLog(text, cls = 'info') {
+  G.log.push({ text, cls });
+  renderLog();
+}
+
+function logTurn(n) {
+  G.log.push({ text: `── Turn ${n} ──`, cls: 'turn-header' });
+  renderLog();
+}
+
+// ── Damage calc ──────────────────────────────────────────────────
+function calcDamage(attacker, defender) {
+  let dmg = attacker.warriors * ATK_PER_W - defender.warriors * DEF_PER_W;
+  dmg = Math.max(MIN_DAMAGE, dmg);
+  if (defender.defending) dmg = Math.floor(dmg * DEFEND_MULTI);
+  return dmg;
+}
+
+// ── Player turn ──────────────────────────────────────────────────
+function playerAction(action) {
+  if (G.phase !== 'player') return;
+
+  const p = G.player;
+  const e = G.enemy;
+
+  logTurn(G.turn);
+
+  switch (action) {
+    case 'gather': {
+      const f = p.workers * 2, w = p.workers * 1;
+      p.food += f; p.wood += w;
+      addLog(`Your tribe gathers: +${f} food, +${w} wood.`, 'player-act');
+      break;
+    }
+    case 'train': {
+      if (p.food < TRAIN_FOOD || p.wood < TRAIN_WOOD) {
+        addLog('Not enough resources to train a warrior!', 'info');
+        return;
+      }
+      p.food -= TRAIN_FOOD; p.wood -= TRAIN_WOOD; p.warriors++;
+      addLog(`A new warrior joins your tribe! (${p.warriors} warriors total)`, 'player-act');
+      break;
+    }
+    case 'attack': {
+      if (p.warriors === 0) {
+        addLog('You have no warriors to attack with!', 'info');
+        return;
+      }
+      const dmg = calcDamage(p, e);
+      e.hp = Math.max(0, e.hp - dmg);
+      addLog(`Your warriors charge! Dealt ${dmg} damage.${e.defending ? ' (enemy was defending)' : ''}`, 'combat');
+      break;
+    }
+    case 'defend': {
+      p.defending = true;
+      addLog('Your tribe raises defenses — incoming damage halved this turn.', 'player-act');
+      break;
+    }
+  }
+
+  G.phase = 'enemy';
+  renderUI();
+  if (checkOver()) return;
+
+  setActionsEnabled(false);
+  document.getElementById('enemy-thinking').style.display = 'block';
+  setTimeout(enemyTurn, 800);
+}
+
+// ── Enemy AI ─────────────────────────────────────────────────────
+function enemyTurn() {
+  document.getElementById('enemy-thinking').style.display = 'none';
+
+  const e = G.enemy;
+  const p = G.player;
+  e.defending = false;
+
+  const canTrain     = e.food >= TRAIN_FOOD && e.wood >= TRAIN_WOOD;
+  const needsRes     = e.food < TRAIN_FOOD || e.wood < TRAIN_WOOD;
+  const hasWarriors  = e.warriors > 0;
+  const r            = Math.random();
+
+  let action;
+  if (!hasWarriors || (needsRes && e.warriors < 3))    action = 'gather';
+  else if (canTrain && e.warriors < 5 && r < 0.45)     action = 'train';
+  else if (hasWarriors && r < 0.65)                    action = 'attack';
+  else if (needsRes)                                   action = 'gather';
+  else if (r < 0.5)                                    action = 'gather';
+  else                                                 action = 'defend';
+
+  switch (action) {
+    case 'gather': {
+      const f = e.workers * 2, w = e.workers * 1;
+      e.food += f; e.wood += w;
+      addLog(`Enemy tribe gathers: +${f} food, +${w} wood.`, 'enemy-act');
+      break;
+    }
+    case 'train': {
+      e.food -= TRAIN_FOOD; e.wood -= TRAIN_WOOD; e.warriors++;
+      addLog(`Enemy tribe trains a new warrior! (${e.warriors} warriors total)`, 'enemy-act');
+      break;
+    }
+    case 'attack': {
+      const dmg = calcDamage(e, p);
+      p.hp = Math.max(0, p.hp - dmg);
+      addLog(`Enemy warriors attack! Dealt ${dmg} damage to your tribe.${p.defending ? ' (you were defending)' : ''}`, 'combat');
+      break;
+    }
+    case 'defend': {
+      e.defending = true;
+      addLog('Enemy tribe raises defenses.', 'enemy-act');
+      break;
+    }
+  }
+
+  p.defending = false;
+  G.turn++;
+  G.phase = 'player';
+
+  renderUI();
+  setActionsEnabled(true);
+
+  if (checkOver()) return;
+  if (G.turn > MAX_TURNS) { endGame('timeout'); }
+}
+
+// ── Win condition ────────────────────────────────────────────────
+function checkOver() {
+  if (G.player.hp <= 0) { endGame('lose'); return true; }
+  if (G.enemy.hp  <= 0) { endGame('win');  return true; }
+  return false;
+}
+
+function endGame(result) {
+  G.phase = 'over';
+  setActionsEnabled(false);
+  renderUI();
+
+  const title = document.getElementById('gameover-title');
+  const desc  = document.getElementById('gameover-desc');
+  const p = G.player, e = G.enemy;
+
+  if (result === 'win') {
+    title.textContent = 'Victory!';
+    title.className = 'gameover-title win';
+    desc.textContent = 'Your warriors have crushed the enemy tribe. The island is yours!';
+  } else if (result === 'lose') {
+    title.textContent = 'Defeated';
+    title.className = 'gameover-title lose';
+    desc.textContent = 'Your tribe has fallen. The enemy claims the island.';
+  } else {
+    if (p.hp > e.hp) {
+      title.textContent = 'Victory!';
+      title.className = 'gameover-title win';
+      desc.textContent = `20 turns are up! Your tribe stands stronger (${p.hp} vs ${e.hp} HP). You hold the island!`;
+    } else if (e.hp > p.hp) {
+      title.textContent = 'Defeated';
+      title.className = 'gameover-title lose';
+      desc.textContent = `20 turns are up. The enemy outlasted you (${e.hp} vs ${p.hp} HP). The island is lost.`;
+    } else {
+      title.textContent = 'Stalemate';
+      title.className = 'gameover-title draw';
+      desc.textContent = `Both tribes are equally matched after 20 turns. A tense peace settles over the island.`;
+    }
+  }
+
+  document.getElementById('gameover-overlay').classList.add('show');
+}
+
+function restartGame() {
+  document.getElementById('gameover-overlay').classList.remove('show');
+  initGame();
+  renderUI();
+  setActionsEnabled(true);
+  document.getElementById('log-entries').innerHTML = '';
+  addLog('A new battle for the island begins. Choose your action wisely.', 'info');
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function renderUI() {
+  const { player: p, enemy: e, turn } = G;
+
+  document.getElementById('turn-label').textContent = `Turn ${Math.min(turn, MAX_TURNS)} / ${MAX_TURNS}`;
+  document.getElementById('phase-pill').textContent  = G.phase === 'player' ? 'Your turn' : "Enemy's turn";
+
+  renderTribe('player', p);
+  renderTribe('enemy',  e);
+
+  // Dynamic hints
+  document.getElementById('gather-hint').textContent = `+${p.workers * 2} Food, +${p.workers} Wood`;
+  const expectedDmg = calcDamage(p, e);
+  document.getElementById('attack-hint').textContent = `~${expectedDmg} dmg`;
+
+  // Button disabled states (during player's turn)
+  document.getElementById('btn-train').disabled  = p.food < TRAIN_FOOD || p.wood < TRAIN_WOOD;
+  document.getElementById('btn-attack').disabled = p.warriors === 0;
+}
+
+function renderTribe(side, tribe) {
+  const pct = (tribe.hp / tribe.maxHp) * 100;
+  document.getElementById(`${side}-hp-text`).textContent = `${tribe.hp} / ${tribe.maxHp}`;
+
+  const fill = document.getElementById(`${side}-hp-fill`);
+  fill.style.width = pct + '%';
+  fill.className = 'hp-fill' + (pct <= 25 ? ' crit' : pct <= 50 ? ' low' : '');
+
+  document.getElementById(`${side}-warriors`).textContent = tribe.warriors;
+  document.getElementById(`${side}-workers`).textContent  = tribe.workers;
+  document.getElementById(`${side}-food`).textContent     = tribe.food;
+  document.getElementById(`${side}-wood`).textContent     = tribe.wood;
+
+  const badges = document.getElementById(`${side}-badges`);
+  badges.innerHTML = '';
+  if (tribe.defending) {
+    const b = document.createElement('span');
+    b.className = 'badge defending';
+    b.textContent = '🛡️ Defending';
+    badges.appendChild(b);
+  }
+}
+
+function renderLog() {
+  const container = document.getElementById('log-entries');
+  container.innerHTML = '';
+  const recent = G.log.slice(-40);
+  for (const entry of recent) {
+    const div = document.createElement('div');
+    div.className = `log-entry ${entry.cls}`;
+    div.textContent = entry.text;
+    container.appendChild(div);
+  }
+  const panel = document.getElementById('log-panel');
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function setActionsEnabled(enabled) {
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.disabled = !enabled;
+  });
+  if (enabled) {
+    // Re-apply contextual disabled states
+    document.getElementById('btn-train').disabled  = G.player.food < TRAIN_FOOD || G.player.wood < TRAIN_WOOD;
+    document.getElementById('btn-attack').disabled = G.player.warriors === 0;
+  }
+}
+
+// ── Boot ─────────────────────────────────────────────────────────
+initGame();
+renderUI();
+addLog('The battle for the island begins. Choose your first action.', 'info');
+</script>
+</body>
+</html>

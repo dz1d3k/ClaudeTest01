@@ -46,8 +46,8 @@
 <body>
 <main>
   <h1>Tic-Tac-Toe 10×10</h1>
-  <p class="sub">Both players need <b>5 in a row</b> in any direction. <b>X always starts</b>, and X's
-    first move must be on the edge or at most 1 square away from it (the outer two rings).</p>
+  <p class="sub">Both players need <b>4 in a row</b> in any direction. <b>X always starts</b>, and X's
+    first move must be on the edge or at most 2 squares away from it (not in the centre 4×4).</p>
 
   <div class="bar">
     <div class="status" id="status"></div>
@@ -76,11 +76,11 @@ const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
 const modeEl = document.getElementById('mode');
 const score = { X: 0, O: 0, D: 0 };
-const WIN = 5;
+const WIN = 4;
 let grid, turn, over, cells, moves;
 
-// X's opening move must be within 1 square of the edge (rows/cols 0, 1, 8, 9).
-const nearEdge = (r, c) => Math.min(r, c, N - 1 - r, N - 1 - c) <= 1;
+// X's opening move must be within 2 squares of the edge (not in the centre 4×4).
+const nearEdge = (r, c) => Math.min(r, c, N - 1 - r, N - 1 - c) <= 2;
 const legal = (r, c) => !grid[r][c] && (moves > 0 || nearEdge(r, c));
 
 function init() {

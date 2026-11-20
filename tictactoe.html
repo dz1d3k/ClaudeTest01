@@ -45,7 +45,9 @@
 <body>
 <main>
   <h1>Tic-Tac-Toe 10×10</h1>
-  <p class="sub">Get 3 in a row — horizontally, vertically or diagonally.</p>
+  <p class="sub">First player needs <b>5 in a row</b> in any direction.
+    Second player needs only <b>4</b> horizontally or vertically, but still <b>5</b> diagonally.</p>
+  <p class="sub" id="rules"></p>
 
   <div class="bar">
     <div class="status" id="status"></div>
@@ -68,17 +70,24 @@
 </main>
 
 <script>
-const N = 10, WIN = 3;
+const N = 10;
 const DIRS = [[0,1],[1,0],[1,1],[1,-1]];
 const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
 const modeEl = document.getElementById('mode');
 const score = { X: 0, O: 0, D: 0 };
-let grid, turn, over, cells, starter = 'X';
+let grid, turn, over, cells, starter = 'X', gameStarter = 'X';
+
+// Second mover: 4 for straight lines, 5 for diagonals. First mover: always 5.
+const needFor = (p, dr, dc) => (p !== gameStarter && (dr === 0 || dc === 0)) ? 4 : 5;
 
 function init() {
   grid = Array.from({ length: N }, () => Array(N).fill(null));
-  turn = starter; over = false;
+  turn = starter; gameStarter = starter; over = false;
+  const second = starter === 'X' ? 'O' : 'X';
+  document.getElementById('rules').innerHTML =
+    `This game: <span style="color:var(--${starter.toLowerCase()})">${starter}</span> starts (needs 5) · ` +
+    `<span style="color:var(--${second.toLowerCase()})">${second}</span> needs 4 straight / 5 diagonal`;
   boardEl.innerHTML = '';
   cells = [];
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
@@ -103,7 +112,7 @@ function winningLine(r, c, p) {
       let rr = r + dr * s, cc = c + dc * s;
       while (inside(rr, cc) && grid[rr][cc] === p) { line.push([rr, cc]); rr += dr * s; cc += dc * s; }
     }
-    if (line.length >= WIN) return line;
+    if (line.length >= needFor(p, dr, dc)) return line;
   }
   return null;
 }
@@ -169,16 +178,34 @@ function threatsAfter(r, c, p) {
   grid[r][c] = null;
   return t;
 }
-function heuristic(r, c) {
-  let s = 0;
-  for (const [dr, dc] of DIRS) for (const s2 of [1, -1]) for (let k = 1; k <= 2; k++) {
-    const rr = r + dr * s2 * k, cc = c + dc * s2 * k;
-    if (!inside(rr, cc)) continue;
-    if (grid[rr][cc] === 'O') s += 3 / k;
-    else if (grid[rr][cc] === 'X') s += 2.5 / k;
+function lineValue(r, c, p) {
+  // Value of placing p at (r,c): look at the run it would form in each direction.
+  let total = 0;
+  for (const [dr, dc] of DIRS) {
+    const need = needFor(p, dr, dc);
+    let count = 1, open = 0, space = 1;
+    for (const s of [1, -1]) {
+      let rr = r + dr * s, cc = c + dc * s;
+      while (inside(rr, cc) && grid[rr][cc] === p) { count++; rr += dr * s; cc += dc * s; }
+      if (inside(rr, cc) && !grid[rr][cc]) {
+        open++;
+        // room beyond the run, to know if this line can still reach `need`
+        while (inside(rr, cc) && grid[rr][cc] !== (p === 'X' ? 'O' : 'X') && space + count < need + 2) { space++; rr += dr * s; cc += dc * s; }
+      }
+    }
+    if (count + space - 1 < need) continue;         // dead line, can never win
+    const gap = need - count;
+    if (gap <= 0) total += 1e7;
+    else if (gap === 1) total += open === 2 ? 2e5 : 1.2e4;
+    else if (gap === 2) total += open === 2 ? 8e3 : 600;
+    else if (gap === 3) total += open === 2 ? 300 : 40;
+    else total += 8;
   }
-  s -= (Math.abs(r - 4.5) + Math.abs(c - 4.5)) * 0.05; // slight centre preference
-  return s + Math.random() * 0.1;
+  return total;
+}
+function heuristic(r, c) {
+  return lineValue(r, c, 'O') * 1.1 + lineValue(r, c, 'X')
+    - (Math.abs(r - 4.5) + Math.abs(c - 4.5)) * 0.5 + Math.random();
 }
 function aiMove() {
   if (over) return;
@@ -189,7 +216,7 @@ function aiMove() {
     empty.find(([r, c]) => wouldWin(r, c, 'X')) ||
     empty.find(([r, c]) => threatsAfter(r, c, 'O') >= 2) ||
     empty.find(([r, c]) => threatsAfter(r, c, 'X') >= 2) ||
-    empty.reduce((best, m) => (heuristic(...m) > heuristic(...best) ? m : best));
+    empty.map(m => [m, heuristic(...m)]).reduce((a, b) => (b[1] > a[1] ? b : a))[0];
   place(...pick);
 }
 

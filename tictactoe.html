@@ -46,7 +46,7 @@
 <main>
   <h1>Tic-Tac-Toe 10×10</h1>
   <p class="sub">First player needs <b>5 in a row</b> in any direction.
-    Second player needs only <b>4</b> horizontally or vertically, but still <b>5</b> diagonally.</p>
+    Second player needs only <b>4</b> if the line is horizontal or vertical <b>and touches the edge of the board</b>; otherwise 5.</p>
   <p class="sub" id="rules"></p>
 
   <div class="bar">
@@ -78,8 +78,10 @@ const modeEl = document.getElementById('mode');
 const score = { X: 0, O: 0, D: 0 };
 let grid, turn, over, cells, starter = 'X', gameStarter = 'X';
 
-// Second mover: 4 for straight lines, 5 for diagonals. First mover: always 5.
-const needFor = (p, dr, dc) => (p !== gameStarter && (dr === 0 || dc === 0)) ? 4 : 5;
+// First mover: always 5. Second mover: 4 only for a horizontal/vertical line
+// that touches the edge of the board; otherwise 5 (diagonals always 5).
+const needFor = (p, dr, dc, touchesEdge) =>
+  (p !== gameStarter && (dr === 0 || dc === 0) && touchesEdge) ? 4 : 5;
 
 function init() {
   grid = Array.from({ length: N }, () => Array(N).fill(null));
@@ -87,7 +89,7 @@ function init() {
   const second = starter === 'X' ? 'O' : 'X';
   document.getElementById('rules').innerHTML =
     `This game: <span style="color:var(--${starter.toLowerCase()})">${starter}</span> starts (needs 5) · ` +
-    `<span style="color:var(--${second.toLowerCase()})">${second}</span> needs 4 straight / 5 diagonal`;
+    `<span style="color:var(--${second.toLowerCase()})">${second}</span> needs 4 on the edge / 5 elsewhere`;
   boardEl.innerHTML = '';
   cells = [];
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
@@ -108,11 +110,13 @@ const inside = (r, c) => r >= 0 && r < N && c >= 0 && c < N;
 function winningLine(r, c, p) {
   for (const [dr, dc] of DIRS) {
     const line = [[r, c]];
+    let edge = false;
     for (const s of [1, -1]) {
       let rr = r + dr * s, cc = c + dc * s;
       while (inside(rr, cc) && grid[rr][cc] === p) { line.push([rr, cc]); rr += dr * s; cc += dc * s; }
+      if (!inside(rr, cc)) edge = true;
     }
-    if (line.length >= needFor(p, dr, dc)) return line;
+    if (line.length >= needFor(p, dr, dc, edge)) return line;
   }
   return null;
 }
@@ -182,7 +186,13 @@ function lineValue(r, c, p) {
   // Value of placing p at (r,c): look at the run it would form in each direction.
   let total = 0;
   for (const [dr, dc] of DIRS) {
-    const need = needFor(p, dr, dc);
+    let edge = false;
+    for (const s of [1, -1]) {
+      let rr = r + dr * s, cc = c + dc * s;
+      while (inside(rr, cc) && grid[rr][cc] === p) { rr += dr * s; cc += dc * s; }
+      if (!inside(rr, cc)) edge = true;
+    }
+    const need = needFor(p, dr, dc, edge);
     let count = 1, open = 0, space = 1;
     for (const s of [1, -1]) {
       let rr = r + dr * s, cc = c + dc * s;

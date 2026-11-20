@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe 10×10</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --panel: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --line: #d6d1c4; --cell: #fbfaf6; --cell-hover: #efe9da;
+    --x: #d0453a; --o: #2c6bd1; --win: #f2c94c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16171a; --panel: #1f2125; --text: #ececee; --muted: #9a9aa2;
+      --line: #34363c; --cell: #24262b; --cell-hover: #2e3036;
+      --x: #ff6b5e; --o: #6ea2ff; --win: #8a6d12; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg);
+    color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 24px 16px; }
+  main { width: 100%; max-width: 560px; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .status { font-weight: 600; font-size: 1.05rem; min-height: 1.5em; }
+  .status .x { color: var(--x); } .status .o { color: var(--o); }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  button, select { font: inherit; font-size: .9rem; padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; }
+  button:hover { background: var(--cell-hover); }
+  .board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; background: var(--line);
+    border: 2px solid var(--line); border-radius: 8px; overflow: hidden; aspect-ratio: 1; width: 100%; }
+  .cell { background: var(--cell); border: 0; border-radius: 0; padding: 0; display: flex;
+    align-items: center; justify-content: center; font-weight: 800; font-size: clamp(14px, 4.5vw, 28px);
+    cursor: pointer; user-select: none; }
+  .cell:hover:not(:disabled) { background: var(--cell-hover); }
+  .cell:disabled { cursor: default; }
+  .cell.x { color: var(--x); } .cell.o { color: var(--o); }
+  .cell.win { background: var(--win); }
+  .cell.last { box-shadow: inset 0 0 0 2px var(--muted); }
+  .score { display: flex; gap: 16px; margin-top: 14px; font-size: .95rem; color: var(--muted); }
+  .score b { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tic-Tac-Toe 10×10</h1>
+  <p class="sub">Get 3 in a row — horizontally, vertically or diagonally.</p>
+
+  <div class="bar">
+    <div class="status" id="status"></div>
+    <div class="controls">
+      <select id="mode" aria-label="Game mode">
+        <option value="pvp">2 players</option>
+        <option value="ai">vs Computer (you are X)</option>
+      </select>
+      <button id="restart">New game</button>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="score">
+    <span>X wins: <b id="sx">0</b></span>
+    <span>O wins: <b id="so">0</b></span>
+    <span>Draws: <b id="sd">0</b></span>
+  </div>
+</main>
+
+<script>
+const N = 10, WIN = 3;
+const DIRS = [[0,1],[1,0],[1,1],[1,-1]];
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const modeEl = document.getElementById('mode');
+const score = { X: 0, O: 0, D: 0 };
+let grid, turn, over, cells, starter = 'X';
+
+function init() {
+  grid = Array.from({ length: N }, () => Array(N).fill(null));
+  turn = starter; over = false;
+  boardEl.innerHTML = '';
+  cells = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const b = document.createElement('button');
+    b.className = 'cell';
+    b.setAttribute('aria-label', `Row ${r + 1}, column ${c + 1}`);
+    b.addEventListener('click', () => humanMove(r, c));
+    boardEl.appendChild(b);
+    cells.push(b);
+  }
+  render();
+  if (modeEl.value === 'ai' && turn === 'O') setTimeout(aiMove, 300);
+}
+
+const cellAt = (r, c) => cells[r * N + c];
+const inside = (r, c) => r >= 0 && r < N && c >= 0 && c < N;
+
+function winningLine(r, c, p) {
+  for (const [dr, dc] of DIRS) {
+    const line = [[r, c]];
+    for (const s of [1, -1]) {
+      let rr = r + dr * s, cc = c + dc * s;
+      while (inside(rr, cc) && grid[rr][cc] === p) { line.push([rr, cc]); rr += dr * s; cc += dc * s; }
+    }
+    if (line.length >= WIN) return line;
+  }
+  return null;
+}
+
+function place(r, c) {
+  if (over || grid[r][c]) return false;
+  const p = turn;
+  grid[r][c] = p;
+  cells.forEach(el => el.classList.remove('last'));
+  const el = cellAt(r, c);
+  el.textContent = p; el.classList.add(p.toLowerCase(), 'last'); el.disabled = true;
+
+  const line = winningLine(r, c, p);
+  if (line) {
+    over = true; score[p]++;
+    line.forEach(([rr, cc]) => cellAt(rr, cc).classList.add('win'));
+    finish(`<span class="${p.toLowerCase()}">${p}</span> wins!`);
+    return true;
+  }
+  if (grid.every(row => row.every(Boolean))) {
+    over = true; score.D++;
+    finish('Draw.');
+    return true;
+  }
+  turn = p === 'X' ? 'O' : 'X';
+  render();
+  return true;
+}
+
+function finish(msg) {
+  statusEl.innerHTML = msg;
+  cells.forEach(el => el.disabled = true);
+  starter = starter === 'X' ? 'O' : 'X'; // alternate who starts next game
+  updateScore();
+}
+
+function render() {
+  const who = modeEl.value === 'ai' && turn === 'O' ? ' (computer thinking…)' : '';
+  statusEl.innerHTML = `<span class="${turn.toLowerCase()}">${turn}</span> to move${who}`;
+}
+
+function updateScore() {
+  document.getElementById('sx').textContent = score.X;
+  document.getElementById('so').textContent = score.O;
+  document.getElementById('sd').textContent = score.D;
+}
+
+function humanMove(r, c) {
+  if (modeEl.value === 'ai' && turn === 'O') return;
+  if (place(r, c) && !over && modeEl.value === 'ai') setTimeout(aiMove, 300);
+}
+
+// --- Simple computer opponent ---
+// 1) win now  2) block opponent's win  3) block/create double threats  4) best heuristic score
+function wouldWin(r, c, p) {
+  grid[r][c] = p; const w = !!winningLine(r, c, p); grid[r][c] = null; return w;
+}
+function threatsAfter(r, c, p) {
+  grid[r][c] = p;
+  let t = 0;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++)
+    if (!grid[i][j] && wouldWin(i, j, p)) t++;
+  grid[r][c] = null;
+  return t;
+}
+function heuristic(r, c) {
+  let s = 0;
+  for (const [dr, dc] of DIRS) for (const s2 of [1, -1]) for (let k = 1; k <= 2; k++) {
+    const rr = r + dr * s2 * k, cc = c + dc * s2 * k;
+    if (!inside(rr, cc)) continue;
+    if (grid[rr][cc] === 'O') s += 3 / k;
+    else if (grid[rr][cc] === 'X') s += 2.5 / k;
+  }
+  s -= (Math.abs(r - 4.5) + Math.abs(c - 4.5)) * 0.05; // slight centre preference
+  return s + Math.random() * 0.1;
+}
+function aiMove() {
+  if (over) return;
+  const empty = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!grid[r][c]) empty.push([r, c]);
+  const pick =
+    empty.find(([r, c]) => wouldWin(r, c, 'O')) ||
+    empty.find(([r, c]) => wouldWin(r, c, 'X')) ||
+    empty.find(([r, c]) => threatsAfter(r, c, 'O') >= 2) ||
+    empty.find(([r, c]) => threatsAfter(r, c, 'X') >= 2) ||
+    empty.reduce((best, m) => (heuristic(...m) > heuristic(...best) ? m : best));
+  place(...pick);
+}
+
+document.getElementById('restart').addEventListener('click', init);
+modeEl.addEventListener('change', () => { starter = 'X'; init(); });
+init();
+</script>
+</body>
+</html>

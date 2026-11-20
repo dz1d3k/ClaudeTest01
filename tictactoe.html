@@ -37,6 +37,7 @@
   .cell:disabled { cursor: default; }
   .cell.x { color: var(--x); } .cell.o { color: var(--o); }
   .cell.win { background: var(--win); }
+  .cell.blocked { background: repeating-linear-gradient(45deg, var(--cell), var(--cell) 4px, var(--line) 4px, var(--line) 6px); cursor: not-allowed; }
   .cell.last { box-shadow: inset 0 0 0 2px var(--muted); }
   .score { display: flex; gap: 16px; margin-top: 14px; font-size: .95rem; color: var(--muted); }
   .score b { color: var(--text); }
@@ -45,9 +46,8 @@
 <body>
 <main>
   <h1>Tic-Tac-Toe 10×10</h1>
-  <p class="sub">First player needs <b>5 in a row</b> in any direction.
-    Second player needs only <b>4</b> if the line is horizontal or vertical <b>and touches the edge of the board</b>; otherwise 5.</p>
-  <p class="sub" id="rules"></p>
+  <p class="sub">Both players need <b>5 in a row</b> in any direction. <b>X always starts</b>, and X's
+    first move must be on the edge or at most 1 square away from it (the outer two rings).</p>
 
   <div class="bar">
     <div class="status" id="status"></div>
@@ -76,32 +76,27 @@ const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
 const modeEl = document.getElementById('mode');
 const score = { X: 0, O: 0, D: 0 };
-let grid, turn, over, cells, starter = 'X', gameStarter = 'X';
+const WIN = 5;
+let grid, turn, over, cells, moves;
 
-// First mover: always 5. Second mover: 4 only for a horizontal/vertical line
-// that touches the edge of the board; otherwise 5 (diagonals always 5).
-const needFor = (p, dr, dc, touchesEdge) =>
-  (p !== gameStarter && (dr === 0 || dc === 0) && touchesEdge) ? 4 : 5;
+// X's opening move must be within 1 square of the edge (rows/cols 0, 1, 8, 9).
+const nearEdge = (r, c) => Math.min(r, c, N - 1 - r, N - 1 - c) <= 1;
+const legal = (r, c) => !grid[r][c] && (moves > 0 || nearEdge(r, c));
 
 function init() {
   grid = Array.from({ length: N }, () => Array(N).fill(null));
-  turn = starter; gameStarter = starter; over = false;
-  const second = starter === 'X' ? 'O' : 'X';
-  document.getElementById('rules').innerHTML =
-    `This game: <span style="color:var(--${starter.toLowerCase()})">${starter}</span> starts (needs 5) · ` +
-    `<span style="color:var(--${second.toLowerCase()})">${second}</span> needs 4 on the edge / 5 elsewhere`;
+  turn = 'X'; over = false; moves = 0;
   boardEl.innerHTML = '';
   cells = [];
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
     const b = document.createElement('button');
-    b.className = 'cell';
+    b.className = nearEdge(r, c) ? 'cell' : 'cell blocked';
     b.setAttribute('aria-label', `Row ${r + 1}, column ${c + 1}`);
     b.addEventListener('click', () => humanMove(r, c));
     boardEl.appendChild(b);
     cells.push(b);
   }
   render();
-  if (modeEl.value === 'ai' && turn === 'O') setTimeout(aiMove, 300);
 }
 
 const cellAt = (r, c) => cells[r * N + c];
@@ -110,21 +105,20 @@ const inside = (r, c) => r >= 0 && r < N && c >= 0 && c < N;
 function winningLine(r, c, p) {
   for (const [dr, dc] of DIRS) {
     const line = [[r, c]];
-    let edge = false;
     for (const s of [1, -1]) {
       let rr = r + dr * s, cc = c + dc * s;
       while (inside(rr, cc) && grid[rr][cc] === p) { line.push([rr, cc]); rr += dr * s; cc += dc * s; }
-      if (!inside(rr, cc)) edge = true;
     }
-    if (line.length >= needFor(p, dr, dc, edge)) return line;
+    if (line.length >= WIN) return line;
   }
   return null;
 }
 
 function place(r, c) {
-  if (over || grid[r][c]) return false;
+  if (over || !legal(r, c)) return false;
   const p = turn;
   grid[r][c] = p;
+  if (moves++ === 0) cells.forEach(el => el.classList.remove('blocked'));
   cells.forEach(el => el.classList.remove('last'));
   const el = cellAt(r, c);
   el.textContent = p; el.classList.add(p.toLowerCase(), 'last'); el.disabled = true;
@@ -149,13 +143,13 @@ function place(r, c) {
 function finish(msg) {
   statusEl.innerHTML = msg;
   cells.forEach(el => el.disabled = true);
-  starter = starter === 'X' ? 'O' : 'X'; // alternate who starts next game
   updateScore();
 }
 
 function render() {
   const who = modeEl.value === 'ai' && turn === 'O' ? ' (computer thinking…)' : '';
-  statusEl.innerHTML = `<span class="${turn.toLowerCase()}">${turn}</span> to move${who}`;
+  const hint = moves === 0 ? ' — opening must be near the edge' : '';
+  statusEl.innerHTML = `<span class="${turn.toLowerCase()}">${turn}</span> to move${who}${hint}`;
 }
 
 function updateScore() {
@@ -186,13 +180,7 @@ function lineValue(r, c, p) {
   // Value of placing p at (r,c): look at the run it would form in each direction.
   let total = 0;
   for (const [dr, dc] of DIRS) {
-    let edge = false;
-    for (const s of [1, -1]) {
-      let rr = r + dr * s, cc = c + dc * s;
-      while (inside(rr, cc) && grid[rr][cc] === p) { rr += dr * s; cc += dc * s; }
-      if (!inside(rr, cc)) edge = true;
-    }
-    const need = needFor(p, dr, dc, edge);
+    const need = WIN;
     let count = 1, open = 0, space = 1;
     for (const s of [1, -1]) {
       let rr = r + dr * s, cc = c + dc * s;
@@ -231,7 +219,7 @@ function aiMove() {
 }
 
 document.getElementById('restart').addEventListener('click', init);
-modeEl.addEventListener('change', () => { starter = 'X'; init(); });
+modeEl.addEventListener('change', init);
 init();
 </script>
 </body>
